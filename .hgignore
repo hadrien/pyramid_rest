@@ -1,0 +1,7 @@
+\.coverage
+\.noseids
+coverage.xml
+nosetests.xml
+pyramid_rest\.egg-info
+.*\.pyc
+\.DS_Store
