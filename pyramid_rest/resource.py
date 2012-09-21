@@ -36,6 +36,10 @@ class IResourceUtility(Interface):
     pass
 
 
+def not_allowed_view(request):
+    raise HTTPMethodNotAllowed()
+
+
 @implementer(IResourceUtility)
 class ResourceUtility(object):
 
@@ -45,6 +49,8 @@ class ResourceUtility(object):
         show='GET',
         update='PUT',
         delete='DELETE',
+        new='GET',
+        edit='GET',
         )
 
     def __init__(self, config, separator='.'):
@@ -76,21 +82,26 @@ class ResourceUtility(object):
             # parent knows about new child
             resource.parent.children[resource.name] = resource
             resource.depth = resource.parent.depth + 1
-            parent_pattern = resource.parent.pattern
+            parent_pattern = resource.parent.item_pattern
 
+        # routes names:
         resource.route_name = "%s" % resource.name
         resource.item_route_name = "%s_item" % resource.name
+        resource.new_route_name = '%s_new' % resource.name
+        resource.edit_route_name = '%s_edit' % resource.name
 
-        resource.collection_pattern = '%s/%s' % (
-            parent_pattern,
-            child,
-            )
+
+        # routes patterns
+        resource.pattern = '%s/%s' % (parent_pattern, child)
         # XXX: provides a way to specify id pattern
-        resource.pattern = '%s/%s/{id%s}' % (
+        resource.item_pattern = '%s/%s/{id%s}' % (
             parent_pattern,
             child,
             resource.depth
             )
+        resource.new_pattern = '%s/new' % resource.pattern
+        resource.edit_pattern = '%s/edit' % resource.item_pattern
+
         self._add_resource_routes(resource)
         self._add_resource_views(resource)
 
@@ -113,13 +124,23 @@ class ResourceUtility(object):
 
     def _add_resource_routes(self, resource):
         self.config.add_route(
-            pattern=resource.pattern,
+            pattern=resource.item_pattern,
             name=resource.item_route_name,
             factory=functools.partial(ResourceContext, resource),
             )
         self.config.add_route(
-            pattern=resource.collection_pattern,
+            pattern=resource.pattern,
             name=resource.route_name,
+            factory=functools.partial(ResourceContext, resource),
+            )
+        self.config.add_route(
+            pattern='%s' % resource.new_pattern,
+            name='%s' % resource.new_route_name,
+            factory=functools.partial(ResourceContext, resource),
+            )
+        self.config.add_route(
+            pattern='%s' % resource.edit_pattern,
+            name='%s' % resource.edit_route_name,
             factory=functools.partial(ResourceContext, resource),
             )
 
@@ -128,14 +149,10 @@ class ResourceUtility(object):
             self.config.add_view(
                 view=view,
                 mapper=ResourceViewMapper,
-                attr=method,
                 **self._get_view_predicates(resource, method)
                 )
 
         not_allowed = [m for m in self.methods if m not in resource.views]
-
-        def not_allowed_view(request):
-            raise HTTPMethodNotAllowed()
 
         for method in not_allowed:
             self.config.add_view(
@@ -146,10 +163,14 @@ class ResourceUtility(object):
     def _get_view_predicates(self, resource, method):
         predicates = dict()
 
-        if method in ('index', 'create'):
+        if method in ('index', 'create',):
             predicates.update(route_name=resource.route_name)
-        else:
+        elif method in ('show', 'delete', 'update'):
             predicates.update(route_name=resource.item_route_name)
+        elif method == 'edit':
+            predicates.update(route_name=resource.edit_route_name)
+        elif method == 'new':
+            predicates.update(route_name=resource.new_route_name)
 
         predicates.update(request_method=self.methods[method])
 
@@ -166,7 +187,7 @@ class Resource(object):
         self.children = dict()
 
         # define REST decorators
-        for method in ('index', 'show', 'create', 'update', 'delete'):
+        for method in ('index', 'show', 'create', 'update', 'delete', 'new', 'edit'):
             setattr(self, method, functools.partial(self.decorator, method))
 
     def __repr__(self):
@@ -182,12 +203,6 @@ class Resource(object):
             return view
         return wrapper
 
-    def view_class(self, **kwargs):
-        def wrapper(cls):
-            self.info = venusian.attach(self, self.callback)
-            return cls
-        return wrapper
-
     def callback(self, context, name, ob):
         registry = context.config.registry
         registry.getUtility(IResourceUtility).add_resource(self)
@@ -198,3 +213,6 @@ class ResourceContext(object):
     def __init__(self, resource, request):
         self.resource = resource
         self.request = request
+
+    def is_item(self):
+        pass
