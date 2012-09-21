@@ -303,9 +303,39 @@ class TestResource(unittest.TestCase):
             m_venusian.attach.call_args_list[1]
             )
 
+
     def test_callback(self):
-        pass
+        from pyramid_rest.resource import Resource, IResourceUtility
 
+        context = mock.Mock()
 
+        r = Resource('dad')
+
+        r.callback(context, None, None)
+
+        context.config.registry.getUtility.assert_called_once_with(
+            IResourceUtility
+            )
+
+        (context
+            .config
+            .registry
+            .getUtility
+            .return_value
+            .add_resource.assert_called_once_with(r)
+            )
+
+class TestResourceContext(unittest.TestCase):
+
+    def test_init(self):
+        from pyramid_rest.resource import ResourceContext, Resource
+
+        resource = Resource('dad')
+        request = mock.Mock()
+
+        rctx = ResourceContext(resource, request)
+
+        self.assertEqual(resource, rctx.resource)
+        self.assertEqual(request, rctx.request)
 
 

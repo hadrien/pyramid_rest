@@ -196,7 +196,7 @@ class Resource(object):
     def decorator(self, method, **kwargs):
         def wrapper(view):
             info = venusian.attach(view, lambda x, y, z: None)
-            if method in self.views:
+            if method in self.views: # pragma: no cover
                 # XXX - Raise a conflict error
                 pass
             self.views[method] = (view, info)
@@ -214,5 +214,5 @@ class ResourceContext(object):
         self.resource = resource
         self.request = request
 
-    def is_item(self):
+    def is_item(self): # pragma: no cover
         pass
