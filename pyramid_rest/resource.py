@@ -101,7 +101,7 @@ class ResourceUtility(object):
             )
         resource.new_pattern = '%s/new' % resource.pattern
         resource.edit_pattern = '%s/edit' % resource.item_pattern
-        # modify the stack info for source code information in introspections.
+        # modify the stack info for accurate source code info in introspection.
         config._ainfo.append(ActionInfo(*resource.info.codeinfo))
         self._add_routes(config, resource)
         self._add_views(config, resource)
@@ -164,21 +164,20 @@ class ResourceUtility(object):
                 )
 
     def _add_introspection(self, config, resource):
-        cat_name = 'REST Resource'
-        discriminator = ('rest resource', resource.name)
-
+        cat_name = 'pyramid_rest resources'
         intr = config.introspectable(
             category_name=cat_name,
-            discriminator=discriminator,
+            discriminator=resource.discriminator,
             title=resource.name,
-            type_name='Resource',
+            type_name='resource',
             )
+        intr['resource'] = resource
         intr.relate('routes', resource.route_name)
 
         if resource.parent:
-            intr.relate(cat_name, ('rest resource', resource.parent.name))
+            intr.relate(cat_name, resource.parent.discriminator)
 
-        config.action(discriminator, introspectables=(intr,))
+        config.action(resource.discriminator, introspectables=(intr,))
 
     def _get_view_predicates(self, resource, method):
         return dict(
@@ -210,6 +209,10 @@ class Resource(object):
 
     def __repr__(self):
         return "<%s_%s>" % (self.__class__.__name__, self.name)
+
+    @property
+    def discriminator(self):
+        return ('pyramid_rest', self.name)
 
     def decorator(self, method, **kwargs):
         def wrapper(view):
