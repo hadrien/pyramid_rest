@@ -173,6 +173,9 @@ class ResourceUtility(object):
             )
         intr['resource'] = resource
         intr.relate('routes', resource.route_name)
+        intr.relate('routes', resource.item_route_name)
+        intr.relate('routes', resource.new_route_name)
+        intr.relate('routes', resource.edit_route_name)
 
         if resource.parent:
             intr.relate(cat_name, resource.parent.discriminator)
@@ -208,7 +211,7 @@ class Resource(object):
             setattr(self, method, functools.partial(self.decorator, method))
 
     def __repr__(self):
-        return "<%s_%s>" % (self.__class__.__name__, self.name)
+        return "<%s '%s'>" % (self.__class__.__name__, self.name)
 
     @property
     def discriminator(self):

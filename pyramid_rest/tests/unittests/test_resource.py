@@ -280,7 +280,7 @@ class TestResource(unittest.TestCase):
         self.assertEqual(m_functools.partial.return_value, r.new)
         self.assertEqual(m_functools.partial.return_value, r.edit)
 
-        self.assertEqual('<Resource_dad>', r.__repr__())
+        self.assertEqual('<Resource \'dad\'>', r.__repr__())
 
     @mock.patch('pyramid_rest.resource.venusian')
     def test_decorator(self, m_venusian):
