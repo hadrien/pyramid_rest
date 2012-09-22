@@ -60,6 +60,11 @@ class TestRequestMethodEventPredicate(unittest.TestCase):
 
         pred = RequestMethodEventPredicate(['PUT', 'DELETE',], None)
 
+        self.assertEqual(
+            'request_method in %s' % ['PUT', 'DELETE'],
+            pred.text()
+            )
+
         self.assertEqual(['PUT', 'DELETE',], pred.methods)
 
         event = mock.Mock()

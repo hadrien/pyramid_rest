@@ -3,6 +3,7 @@ import logging
 import functools
 
 from pyramid.httpexceptions import HTTPMethodNotAllowed
+from pyramid.config.util import ActionInfo, action_method
 
 import venusian
 
@@ -53,14 +54,13 @@ class ResourceUtility(object):
         edit='GET',
         )
 
-    def __init__(self, config, separator='.'):
-        self.config = config
+    def __init__(self, separator='.'):
         self.resources = dict()
         self.parent_resources = dict()
         self.deferred = dict()
         self.separator = separator
 
-    def add_resource(self, resource):
+    def add(self, config, resource):
         try:
             parent, child = resource.name.rsplit(self.separator, 1)
             if parent not in self.resources:
@@ -101,9 +101,12 @@ class ResourceUtility(object):
             )
         resource.new_pattern = '%s/new' % resource.pattern
         resource.edit_pattern = '%s/edit' % resource.item_pattern
-
-        self._add_resource_routes(resource)
-        self._add_resource_views(resource)
+        # modify the stack info for source code information in introspections.
+        config._ainfo.append(ActionInfo(*resource.info.codeinfo))
+        self._add_routes(config, resource)
+        self._add_views(config, resource)
+        self._add_introspection(config, resource)
+        config._ainfo.pop()
 
         log.info(
             'Add REST resource: %s, views: %s, parent: %s',
@@ -113,40 +116,40 @@ class ResourceUtility(object):
             )
         self.resources[resource.name] = resource
 
-        self._add_deferred_children_resource(resource)
+        self._add_deferred_children(config, resource)
 
-    def _add_deferred_children_resource(self, parent_resource):
+    def _add_deferred_children(self, config, parent_resource):
         for name, child_resource in self.deferred.items():
             parent_name, child_name = name.rsplit(self.separator, 1)
             if parent_name == parent_resource.name:
                 self.deferred.pop(name)
-                self.add_resource(child_resource)
+                self.add(config, child_resource)
 
-    def _add_resource_routes(self, resource):
-        self.config.add_route(
+    def _add_routes(self, config, resource):
+        config.add_route(
             pattern=resource.item_pattern,
             name=resource.item_route_name,
             factory=functools.partial(ResourceContext, resource),
             )
-        self.config.add_route(
+        config.add_route(
             pattern=resource.pattern,
             name=resource.route_name,
             factory=functools.partial(ResourceContext, resource),
             )
-        self.config.add_route(
+        config.add_route(
             pattern='%s' % resource.new_pattern,
             name='%s' % resource.new_route_name,
             factory=functools.partial(ResourceContext, resource),
             )
-        self.config.add_route(
+        config.add_route(
             pattern='%s' % resource.edit_pattern,
             name='%s' % resource.edit_route_name,
             factory=functools.partial(ResourceContext, resource),
             )
 
-    def _add_resource_views(self, resource):
+    def _add_views(self, config, resource):
         for method, (view, info) in resource.views.iteritems():
-            self.config.add_view(
+            config.add_view(
                 view=view,
                 mapper=ResourceViewMapper,
                 **self._get_view_predicates(resource, method)
@@ -155,26 +158,41 @@ class ResourceUtility(object):
         not_allowed = [m for m in self.methods if m not in resource.views]
 
         for method in not_allowed:
-            self.config.add_view(
+            config.add_view(
                 view=not_allowed_view,
                 **self._get_view_predicates(resource, method)
                 )
 
+    def _add_introspection(self, config, resource):
+        cat_name = 'REST Resource'
+        discriminator = ('rest resource', resource.name)
+
+        intr = config.introspectable(
+            category_name=cat_name,
+            discriminator=discriminator,
+            title=resource.name,
+            type_name='Resource',
+            )
+        intr.relate('routes', resource.route_name)
+
+        if resource.parent:
+            intr.relate(cat_name, ('rest resource', resource.parent.name))
+
+        config.action(discriminator, introspectables=(intr,))
+
     def _get_view_predicates(self, resource, method):
-        predicates = dict()
-
-        if method in ('index', 'create',):
-            predicates.update(route_name=resource.route_name)
-        elif method in ('show', 'delete', 'update'):
-            predicates.update(route_name=resource.item_route_name)
-        elif method == 'edit':
-            predicates.update(route_name=resource.edit_route_name)
-        elif method == 'new':
-            predicates.update(route_name=resource.new_route_name)
-
-        predicates.update(request_method=self.methods[method])
-
-        return predicates
+        return dict(
+            route_name={
+                'index':  resource.route_name,
+                'create': resource.route_name,
+                'show':   resource.item_route_name,
+                'delete': resource.item_route_name,
+                'update': resource.item_route_name,
+                'edit':   resource.edit_route_name,
+                'new':    resource.new_route_name,
+                }[method],
+            request_method=self.methods[method],
+            )
 
 
 class Resource(object):
@@ -205,7 +223,7 @@ class Resource(object):
 
     def callback(self, context, name, ob):
         registry = context.config.registry
-        registry.getUtility(IResourceUtility).add_resource(self)
+        registry.getUtility(IResourceUtility).add(context.config, self)
 
 
 class ResourceContext(object):

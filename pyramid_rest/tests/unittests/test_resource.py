@@ -52,9 +52,8 @@ class TestResourceUtility(unittest.TestCase):
 
         config = mock.Mock()
 
-        ru = ResourceUtility(config)
+        ru = ResourceUtility()
 
-        self.assertEqual(config, ru.config)
         self.assertEqual(
             dict(
                 index='GET',
@@ -78,12 +77,12 @@ class TestResourceUtility(unittest.TestCase):
 
         # kid is a sub resource:
         # Resource utility must defer processing until parent resource is added
-        ru = ResourceUtility(config)
-        ru.add_resource(kid)
+        ru = ResourceUtility()
+        ru.add(config, kid)
 
         self.assertEqual({'dad.kid': kid}, ru.deferred)
 
-        ru.add_resource(dad)
+        ru.add(config, dad)
 
     @mock.patch('pyramid_rest.resource.functools')
     def test_add_resources_route(self, m_functools):
@@ -98,9 +97,9 @@ class TestResourceUtility(unittest.TestCase):
 
         config = mock.Mock()
 
-        ru = ResourceUtility(config)
+        ru = ResourceUtility()
 
-        ru.add_resource(dad)
+        ru.add(config, dad)
 
         self.assertEqual({'dad': dad}, ru.resources)
         self.assertEqual({'dad': dad}, ru.parent_resources)
@@ -138,7 +137,7 @@ class TestResourceUtility(unittest.TestCase):
             config.add_route.call_args_list[3]
             )
 
-        ru.add_resource(kid)
+        ru.add(config, kid)
         self.assertEqual({'dad': dad, 'dad.kid': kid}, ru.resources)
         self.assertEqual({'dad': dad}, ru.parent_resources)
 
@@ -194,7 +193,7 @@ class TestResourceUtility(unittest.TestCase):
 
         config = mock.Mock()
 
-        ru = ResourceUtility(config)
+        ru = ResourceUtility()
 
         # simulate decorating methods:
         dad.index()(dad_index)
@@ -202,8 +201,8 @@ class TestResourceUtility(unittest.TestCase):
         kid.index()(kid_index)
         kid.show()(kid_show)
 
-        ru.add_resource(dad)
-        ru.add_resource(kid)
+        ru.add(config, dad)
+        ru.add(config, kid)
 
         self.assertEqual(14, config.add_view.call_count)
 
@@ -322,7 +321,7 @@ class TestResource(unittest.TestCase):
             .registry
             .getUtility
             .return_value
-            .add_resource.assert_called_once_with(r)
+            .add.assert_called_once_with(context.config, r)
             )
 
 class TestResourceContext(unittest.TestCase):

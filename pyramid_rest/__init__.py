@@ -13,9 +13,14 @@ class RequestMethodEventPredicate(object):
 
     def __init__(self, methods, config):
         self.methods = methods
+        self.phash = self.text
 
     def __call__(self, event):
         return event.request.method in self.methods
+
+    def text(self):
+        return 'request_method in %s' % self.methods
+
 
 
 def override_request_method(event):
@@ -31,7 +36,7 @@ def override_request_method(event):
 
 def includeme(config):
     log.info('Includes pyramid_rest')
-    config.registry.registerUtility(ResourceUtility(config))
+    config.registry.registerUtility(ResourceUtility())
 
     if asbool(config.registry.settings.get(
         'pyramid_rest.tunneling',
