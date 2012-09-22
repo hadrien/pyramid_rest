@@ -47,10 +47,16 @@ class TestResourceViewMapper(unittest.TestCase):
 
 class TestResourceUtility(unittest.TestCase):
 
+    def _get_config(self):
+        from pyramid.config import Introspectable, Configurator
+        config = mock.Mock(spec=Configurator)
+        config.introspectable.return_value = mock.MagicMock(spec=Introspectable)
+        return config
+
     def test_init(self):
         from pyramid_rest.resource import ResourceUtility
 
-        config = mock.Mock()
+        config = self._get_config()
 
         ru = ResourceUtility()
 
@@ -73,7 +79,7 @@ class TestResourceUtility(unittest.TestCase):
         dad = Resource('dad')
         kid = Resource('dad.kid')
 
-        config = mock.Mock()
+        config = self._get_config()
 
         # kid is a sub resource:
         # Resource utility must defer processing until parent resource is added
@@ -95,7 +101,7 @@ class TestResourceUtility(unittest.TestCase):
         kid = Resource('dad.kid')
         dad = Resource('dad')
 
-        config = mock.Mock()
+        config = self._get_config()
 
         ru = ResourceUtility()
 
@@ -191,7 +197,7 @@ class TestResourceUtility(unittest.TestCase):
         kid = Resource('dad.kid')
         dad = Resource('dad')
 
-        config = mock.Mock()
+        config = self._get_config()
 
         ru = ResourceUtility()
 
