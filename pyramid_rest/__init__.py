@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
+import json
 
 from pyramid.events import NewRequest
+from pyramid.response import Response
 from pyramid.settings import asbool
 
 from pyramid_rest.resource import ResourceUtility
@@ -22,7 +24,6 @@ class RequestMethodEventPredicate(object):
         return 'request_method in %s' % self.methods
 
 
-
 def override_request_method(event):
     methods = ['PUT', 'DELETE']
     override = (
@@ -35,13 +36,15 @@ def override_request_method(event):
 
 
 def includeme(config):
-    log.info('Includes pyramid_rest')
-    config.registry.registerUtility(ResourceUtility())
+    log.info('Including pyramid_rest')
 
-    if asbool(config.registry.settings.get(
-        'pyramid_rest.tunneling',
-        'true',
-        )):
+    utility = ResourceUtility()
+
+    config.registry.registerUtility(utility)
+
+    config.add_directive('add_resource', utility.add_resource)
+
+    if asbool(config.registry.settings.get('pyramid_rest.tunneling', 'true')):
         config.add_subscriber_predicate(
             'request_methods',
             RequestMethodEventPredicate
@@ -52,3 +55,6 @@ def includeme(config):
             NewRequest,
             request_methods=['POST'],
             )
+
+
+    config.commit()

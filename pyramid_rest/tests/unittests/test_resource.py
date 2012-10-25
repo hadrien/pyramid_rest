@@ -4,10 +4,10 @@ import unittest
 import mock
 
 
-class TestResourceViewMapper(unittest.TestCase):
+class TestFunctionViewMapper(unittest.TestCase):
 
     def test_init_and_call(self):
-        from pyramid_rest.resource import ResourceViewMapper
+        from pyramid_rest.resource import FunctionViewMapper
 
         kwargs = dict()
         view = mock.Mock()
@@ -15,11 +15,11 @@ class TestResourceViewMapper(unittest.TestCase):
         req = mock.MagicMock()
         req.matchdict.keys.return_value = ('id1', 'id0', 'id3', 'id2')
 
-        rvm = ResourceViewMapper(**kwargs)
-        wrapped = rvm(view)
+        fvm = FunctionViewMapper(**kwargs)
+        wrapped = fvm(view)
         result = wrapped(ctx, req)
 
-        self.assertEqual(kwargs, rvm.kwargs)
+        self.assertEqual(kwargs, fvm.kwargs)
         self.assertEqual(view.return_value, result)
 
         ids = req.matchdict.__getitem__.return_value
@@ -27,22 +27,12 @@ class TestResourceViewMapper(unittest.TestCase):
         view.assert_called_once_with(ctx, req, ids, ids, ids, ids)
 
         # assert that ids are sorted alphabetically
-        self.assertEqual(
-            mock.call('id0',),
-            req.matchdict.__getitem__.call_args_list[0]
-            )
-        self.assertEqual(
-            mock.call('id1'),
-            req.matchdict.__getitem__.call_args_list[1]
-            )
-        self.assertEqual(
-            mock.call('id2'),
-            req.matchdict.__getitem__.call_args_list[2]
-            )
-        self.assertEqual(
-            mock.call('id3'),
-            req.matchdict.__getitem__.call_args_list[3]
-            )
+        for i in range(4):
+            id_ = 'id%s' % i
+            self.assertEqual(
+                mock.call(id_,),
+                req.matchdict.__getitem__.call_args_list[i]
+                )
 
 
 class TestResourceUtility(unittest.TestCase):
@@ -188,11 +178,11 @@ class TestResourceUtility(unittest.TestCase):
             not_allowed_view,
             )
 
-        dad_index = mock.Mock()
-        dad_show = mock.Mock()
+        dad_index = mock.Mock(spec=not_allowed_view)
+        dad_show = mock.Mock(spec=not_allowed_view)
 
-        kid_index = mock.Mock()
-        kid_show = mock.Mock()
+        kid_index = mock.Mock(spec=not_allowed_view)
+        kid_show = mock.Mock(spec=not_allowed_view)
 
         kid = Resource('dad.kid')
         dad = Resource('dad')
@@ -213,44 +203,48 @@ class TestResourceUtility(unittest.TestCase):
         self.assertEqual(14, config.add_view.call_count)
 
         # check dad views:
+        print config.add_view.call_args_list[0]
+        self._check_add_view(dad_index, 'index', 'GET', 'dad', config.add_view.call_args_list[0])
+        self._check_add_view(dad_show, 'show', 'GET', 'dad_item', config.add_view.call_args_list[1])
 
-        self._check_add_view(dad_index, 'GET', 'dad', config.add_view.call_args_list[0])
-        self._check_add_view(dad_show, 'GET', 'dad_item', config.add_view.call_args_list[1])
-
-        self._check_add_not_allowed(not_allowed_view, 'GET', 'dad_edit', config.add_view.call_args_list[2])
-        self._check_add_not_allowed(not_allowed_view, 'GET', 'dad_new', config.add_view.call_args_list[3])
-        self._check_add_not_allowed(not_allowed_view, 'POST', 'dad', config.add_view.call_args_list[4])
-        self._check_add_not_allowed(not_allowed_view, 'PUT', 'dad_item', config.add_view.call_args_list[5])
-        self._check_add_not_allowed(not_allowed_view, 'DELETE', 'dad_item', config.add_view.call_args_list[6])
+        self._check_add_not_allowed(not_allowed_view, 'edit', 'GET', 'dad_edit', config.add_view.call_args_list[2])
+        self._check_add_not_allowed(not_allowed_view, 'new', 'GET', 'dad_new', config.add_view.call_args_list[3])
+        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad', config.add_view.call_args_list[4])
+        self._check_add_not_allowed(not_allowed_view, 'update', 'PUT', 'dad_item', config.add_view.call_args_list[5])
+        self._check_add_not_allowed(not_allowed_view, 'delete', 'DELETE', 'dad_item', config.add_view.call_args_list[6])
 
         # check kid views:
 
-        self._check_add_view(kid_index, 'GET', 'dad.kid', config.add_view.call_args_list[7])
-        self._check_add_view(kid_show, 'GET', 'dad.kid_item', config.add_view.call_args_list[8])
+        self._check_add_view(kid_index, 'index', 'GET', 'dad.kid', config.add_view.call_args_list[7])
+        self._check_add_view(kid_show, 'show', 'GET', 'dad.kid_item', config.add_view.call_args_list[8])
 
-        self._check_add_not_allowed(not_allowed_view, 'GET', 'dad.kid_edit', config.add_view.call_args_list[9])
-        self._check_add_not_allowed(not_allowed_view, 'GET', 'dad.kid_new', config.add_view.call_args_list[10])
-        self._check_add_not_allowed(not_allowed_view, 'POST', 'dad.kid', config.add_view.call_args_list[11])
-        self._check_add_not_allowed(not_allowed_view, 'PUT', 'dad.kid_item', config.add_view.call_args_list[12])
-        self._check_add_not_allowed(not_allowed_view, 'DELETE', 'dad.kid_item', config.add_view.call_args_list[13])
+        self._check_add_not_allowed(not_allowed_view, 'edit', 'GET', 'dad.kid_edit', config.add_view.call_args_list[9])
+        self._check_add_not_allowed(not_allowed_view, 'new', 'GET', 'dad.kid_new', config.add_view.call_args_list[10])
+        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad.kid', config.add_view.call_args_list[11])
+        self._check_add_not_allowed(not_allowed_view, 'update', 'PUT', 'dad.kid_item', config.add_view.call_args_list[12])
+        self._check_add_not_allowed(not_allowed_view, 'delete', 'DELETE', 'dad.kid_item', config.add_view.call_args_list[13])
 
-    def _check_add_view(self, view, request_method, route_name, real_call):
-        from pyramid_rest.resource import ResourceViewMapper
+    def _check_add_view(self, view, permission, request_method, route_name, real_call):
+        from pyramid_rest.resource import FunctionViewMapper
         self.assertEqual(
             mock.call(
                 view=view,
-                mapper=ResourceViewMapper,
+                mapper=FunctionViewMapper,
+                attr=None,
+                renderer='json',
+                permission=permission,
                 request_method=request_method,
                 route_name=route_name
                 ),
             real_call,
             )
 
-    def _check_add_not_allowed(self, view, request_method, route_name, real_call):
-        from pyramid_rest.resource import ResourceViewMapper
+    def _check_add_not_allowed(self, view, permission, request_method, route_name, real_call):
+        from pyramid_rest.resource import FunctionViewMapper
         self.assertEqual(
             mock.call(
                 view=view,
+                permission=permission,
                 request_method=request_method,
                 route_name=route_name
                 ),
@@ -282,8 +276,9 @@ class TestResource(unittest.TestCase):
 
         self.assertEqual('<Resource \'dad\'>', r.__repr__())
 
+    @mock.patch('pyramid_rest.resource.ViewInfo')
     @mock.patch('pyramid_rest.resource.venusian')
-    def test_decorator(self, m_venusian):
+    def test_decorator(self, m_venusian, m_ViewInfo):
         from pyramid_rest.resource import Resource
 
         r = Resource('dad')
@@ -295,7 +290,7 @@ class TestResource(unittest.TestCase):
 
         self.assertEqual(view_index, result)
         self.assertEqual(
-            {'index': (view_index, m_venusian.attach.return_value)},
+            {'index': m_ViewInfo.return_value},
             r.views
             )
 
@@ -308,7 +303,6 @@ class TestResource(unittest.TestCase):
             m_venusian.attach.call_args_list[1]
             )
 
-
     def test_callback(self):
         from pyramid_rest.resource import Resource, IResourceUtility
 
@@ -318,17 +312,46 @@ class TestResource(unittest.TestCase):
 
         r.callback(context, None, None)
 
-        context.config.registry.getUtility.assert_called_once_with(
-            IResourceUtility
+        context.config.with_package.assert_called_once_with(
+            r.info.module
+            )
+        config = context.config.with_package.return_value
+        (config
+            .registry
+            .getUtility
+            .assert_called_once_with(IResourceUtility)
             )
 
-        (context
-            .config
+        (config
             .registry
             .getUtility
             .return_value
-            .add.assert_called_once_with(context.config, r)
+            .add
+            .assert_called_once_with(config, r)
             )
+
+    @mock.patch('pyramid_rest.resource.ActionInfo')
+    def test_callback_view(self, m_action_info):
+        from pyramid_rest.resource import Resource, IResourceUtility
+
+        context = mock.Mock()
+        view = mock.Mock()
+
+        r = Resource('dad')
+        r.decorator('index')(view)
+
+        view_info = r._conflicts[view]
+
+        r.callback_view(context, None, view)
+
+        context.config._ainfo.append.assert_called_once_with(
+            m_action_info.return_value,
+            )
+        context.config.action.assert_called_once_with(('dad', 'index'))
+        context.config._ainfo.pop.assert_called_once_with()
+
+        m_action_info.assert_called_once_with(*view_info.info.codeinfo)
+
 
 class TestResourceContext(unittest.TestCase):
 
@@ -342,5 +365,3 @@ class TestResourceContext(unittest.TestCase):
 
         self.assertEqual(resource, rctx.resource)
         self.assertEqual(request, rctx.request)
-
-
