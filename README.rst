@@ -4,7 +4,22 @@ Pyramid REST
 * First draft of a pyramid rest proof of concept to be presented/discussed.
 * Features included:
 
-    * resource definition which configure routes/views;
+    * resource definition which configure routes/views, i.e:
+
+        * a resource 'applications' will configure:
+
+            * route [GET/POST] /applications
+            * route [DELETE/PUT] /applications/{id0}
+            * route GET /applications/{id0}/new
+            * route GET /applications/{id0}/edit
+
+        * a resource 'applications.users' will configure:
+
+            * route [GET/POST] /applications/{id0}/users
+            * route [DELETE/PUT] /applications/{id0}/users/{id1}
+            * route GET /applications/{id0}/users/new
+            * route GET /applications/{id0}/users/edit
+
     * resources are added to config introspector and related to their routes,views, sub-resource and parent resource;
     * end user defines REST methods (index, create, show, update, delete, new, edit);
     * by default:
@@ -50,8 +65,9 @@ Pyramid REST
 What next?
 ----------
 
-#. Custom renderer which adapts response format depending on Accept header
-#. Links
-#. Validation
-#. Pagination
-#. Automatic resource definition of SQLAlchemy entities.
+#. Full test coverage;
+#. Custom renderer which adapts response format depending on Accept header;
+#. Links;
+#. Validation;
+#. Pagination;
+#. Automatic resource definition of SQLAlchemy entities;
