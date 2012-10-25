@@ -1,7 +1,7 @@
 Pyramid REST
 ------------
 
-* First draft of a pyramid rest proof of concept to be presented/discussed.
+* First draft of a pyramid extension to build RESTful app.
 * Features included:
 
     * resource definition which configure routes/views, i.e:
