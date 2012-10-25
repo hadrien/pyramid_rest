@@ -72,3 +72,9 @@ What next?
 #. Validation;
 #. Pagination;
 #. Automatic resource definition of SQLAlchemy entities;
+
+
+Code/Feedbacks
+--------------
+
+https://bitbucket.org/hadrien/pyramid_rest
