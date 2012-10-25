@@ -36,15 +36,15 @@ Pyramid REST
         @resource_config('applications.users')
         class AppUsers(object):
 
-        def __init__(self, context, request):
-            pass
+            def __init__(self, context, request):
+                pass
 
-        def index(self):
-            return {}
+            def index(self):
+                return {}
 
-        @method_config(renderer='example.mako')
-        def edit(self, app_id):
-            return {}
+            @method_config(renderer='example.mako')
+            def edit(self, app_id):
+                return {}
 
 
 What next?
