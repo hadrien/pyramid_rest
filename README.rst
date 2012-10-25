@@ -27,6 +27,7 @@ Pyramid REST
         def index(context, request):
             pass
 
+        @app.show()
         def show(context, request, app_id):
             pass
 
