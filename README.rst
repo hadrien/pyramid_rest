@@ -1,7 +1,7 @@
 Pyramid REST
 ------------
 
-* First draft of a pyramid extension to build RESTful app.
+* First draft of a pyramid extension to build RESTful web application.
 * Features included:
 
     * resource definition which configure routes/views, i.e:
