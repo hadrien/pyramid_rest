@@ -9,14 +9,14 @@ Pyramid REST
         * a resource 'applications' will configure:
 
             * route [GET/POST] /applications
-            * route [DELETE/PUT] /applications/{id0}
+            * route [GET/DELETE/PUT] /applications/{id0}
             * route GET /applications/{id0}/new
             * route GET /applications/{id0}/edit
 
         * a resource 'applications.users' will configure:
 
             * route [GET/POST] /applications/{id0}/users
-            * route [DELETE/PUT] /applications/{id0}/users/{id1}
+            * route [GET/DELETE/PUT] /applications/{id0}/users/{id1}
             * route GET /applications/{id0}/users/new
             * route GET /applications/{id0}/users/edit
 
@@ -65,6 +65,7 @@ Pyramid REST
 What next?
 ----------
 
+#. Support for non-collection resource;
 #. Full test coverage;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
