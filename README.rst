@@ -31,24 +31,24 @@ Pyramid REST
 
     #. Imperative using `config.add_resource`, it will associate class in views module to resource ::
 
-        config.add_resource('applications')       # .views.applications:Applications
-        config.add_resource('applications.users') # .views.applications_users:ApplicationsUsers
+        config.add_resource('application')       # .views.applications:ApplicationsView
+        config.add_resource('application.user')  # .views.application_users:ApplicationUsersView
 
     #. Declarative using `Resource` class (cornice style)::
 
-        app_users = Resource('applications.users')
+        app_users = Resource('application.user')
 
         @app_users.index()
         def index(context, request):
             pass
 
-        @app.show()
+        @app_users.show()
         def show(context, request, app_id):
             pass
 
     #. Declarative using `resource_config` decorator::
 
-        @resource_config('applications.users')
+        @resource_config('application.user')
         class AppUsers(object):
 
             def __init__(self, context, request):
@@ -65,8 +65,18 @@ Pyramid REST
 What next?
 ----------
 
-#. Support for non-collection resource;
+#. Singular name in resource;
+#. Naming conventions:
+   * resource name: application.user
+   * view: .views.application_users:ApplicationUsersView
 #. Full test coverage;
+#. Url generation:
+   * resource.get_url()
+   * resource.get_path()
+   * utility.resource_url()
+   * utility.resource_path()
+#. Support for non-collection resource;
+#. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
 #. Validation;

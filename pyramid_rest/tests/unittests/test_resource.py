@@ -74,11 +74,11 @@ class TestResourceUtility(unittest.TestCase):
         # kid is a sub resource:
         # Resource utility must defer processing until parent resource is added
         ru = ResourceUtility()
-        ru.add(config, kid)
+        ru._add(config, kid)
 
         self.assertEqual({'dad.kid': kid}, ru.deferred)
 
-        ru.add(config, dad)
+        ru._add(config, dad)
 
     @mock.patch('pyramid_rest.resource.functools')
     def test_add_resources_route(self, m_functools):
@@ -95,7 +95,7 @@ class TestResourceUtility(unittest.TestCase):
 
         ru = ResourceUtility()
 
-        ru.add(config, dad)
+        ru._add(config, dad)
 
         self.assertEqual({'dad': dad}, ru.resources)
         self.assertEqual({'dad': dad}, ru.parent_resources)
@@ -133,7 +133,7 @@ class TestResourceUtility(unittest.TestCase):
             config.add_route.call_args_list[3]
             )
 
-        ru.add(config, kid)
+        ru._add(config, kid)
         self.assertEqual({'dad': dad, 'dad.kid': kid}, ru.resources)
         self.assertEqual({'dad': dad}, ru.parent_resources)
 
@@ -197,8 +197,8 @@ class TestResourceUtility(unittest.TestCase):
         kid.index()(kid_index)
         kid.show()(kid_show)
 
-        ru.add(config, dad)
-        ru.add(config, kid)
+        ru._add(config, dad)
+        ru._add(config, kid)
 
         self.assertEqual(14, config.add_view.call_count)
 
@@ -326,7 +326,7 @@ class TestResource(unittest.TestCase):
             .registry
             .getUtility
             .return_value
-            .add
+            ._add
             .assert_called_once_with(config, r)
             )
 

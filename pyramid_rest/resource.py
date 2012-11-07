@@ -80,28 +80,31 @@ class ResourceUtility(object):
         self.separator = separator
         self.methods_configs = dict()
 
-    def add_resource(self, config, resource_name, *args, **kwargs):
-        class_name = ''.join([a.title() for a in resource_name.split(".")])
-        module_name = resource_name.replace('.', '_')
+    def add_resource(self, config, resource_name, plural_name=None, documentation="", acl=None):
+        res = resource_config(resource_name, plural_name, documentation, acl)
+
+        class_name = ''.join(a.title() for a in res.collection_name.split("."))
+        module_name = res.collection_name.replace('.', '_')
         dotted_module = '%s.views.%s' % (config.package_name, module_name)
-        dotted_class = '%s:%s' % (dotted_module, class_name)
+        dotted_class = '%s:%sView' % (dotted_module, class_name)
         try:
             cls = config.maybe_dotted(dotted_class)
         except ImportError:
             # Make message is more explicit
             raise ImportError('No class %s found.' % dotted_class)
         config.scan(dotted_module)
-        the_resource = resource_config(resource_name)
-        the_resource(cls) # decorate class to register config
-        the_resource.update_views_settings(self.methods_configs.get(cls, {}))
-        self.add(config, the_resource)
+
+        res(cls) # decorate class to register config
+        res.update_views_settings(self.methods_configs.get(cls, {}))
+        self._add(config, res)
 
     def add_method_config(self, cls, method, settings):
         if 'cls' not in self.methods_configs:
             self.methods_configs[cls] = dict()
         self.methods_configs[cls][method] = settings
 
-    def add(self, config, resource):
+    def _add(self, config, resource):
+        # XXX detect resource name duplicates
         try:
             parent, child = resource.name.rsplit(self.separator, 1)
             if parent not in self.resources:
@@ -162,7 +165,7 @@ class ResourceUtility(object):
             parent_name, child_name = name.rsplit(self.separator, 1)
             if parent_name == parent_resource.name:
                 self.deferred.pop(name)
-                self.add(config, child_resource)
+                self._add(config, child_resource)
 
     def _add_routes(self, config, resource):
         config._ainfo.append(ActionInfo(*resource.info.codeinfo))
@@ -265,36 +268,47 @@ class ViewInfo(object):
 
 
 class BaseResource(object):
+    """
+        :param resource_name: Resource name in singular form.
+        :param plural_name: Resource collection name: a *s* is appended to
+                                *resource_name* if it's not provided.
+    """
 
     methods = ('index', 'show', 'create', 'update', 'delete', 'new', 'edit')
 
-    def __init__(self, resource_name, documentation="", acl=None):
+    def __init__(self, resource_name, plural_name=None, documentation="", acl=None):
+
         self.parent = None
         self.acl = acl
         self.name = resource_name
+        if plural_name:
+            name = resource_name.rpartition('.', 1)
+            name[-1] = plural_name
+            self.collection_name = ''.join(name)
+        else:
+            self.collection_name = '%ss' % resource_name
         self.views = dict()
         self._conflicts = dict()
         self.children = dict()
         self.__doc__ = documentation
-
 
     def __repr__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.name)
 
     @property
     def discriminator(self):
-        return ('pyramid_rest', self.__repr__())
+        return ('pyramid_rest', repr(self))
 
     def callback(self, context, name, ob):
         config = context.config.with_package(self.info.module)
-        config.registry.getUtility(IResourceUtility).add(config, self)
+        config.registry.getUtility(IResourceUtility)._add(config, self)
 
 
 class Resource(BaseResource):
     """Resource class"""
 
-    def __init__(self, resource_name, documentation="", acl=None):
-        super(Resource, self).__init__(resource_name, documentation, acl)
+    def __init__(self, resource_name, plural_name=None, documentation="", acl=None):
+        super(Resource, self).__init__(resource_name, plural_name, documentation, acl)
         self.info = venusian.attach(self, self.callback)
 
         # define REST decorators
