@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import logging
+import functools
 import json
+import logging
 
 from pyramid.events import NewRequest
 from pyramid.response import Response
@@ -43,6 +44,10 @@ def includeme(config):
     config.registry.registerUtility(utility)
 
     config.add_directive('add_resource', utility.add_resource)
+    config.add_directive(
+        'add_singular_resource',
+        functools.partial(utility.add_resource, singular=True),
+        )
 
     if asbool(config.registry.settings.get('pyramid_rest.tunneling', 'true')):
         config.add_subscriber_predicate(
@@ -55,6 +60,5 @@ def includeme(config):
             NewRequest,
             request_methods=['POST'],
             )
-
 
     config.commit()

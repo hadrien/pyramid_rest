@@ -3,26 +3,23 @@ import unittest
 
 import webtest
 
+from pyramid.config import Configurator
 from pyramid.decorator import reify
+from pyramid.exceptions import ConfigurationConflictError
 
 
-class TestController(unittest.TestCase):
+class TestExampleController(unittest.TestCase):
 
-    @reify
-    def config(self):
-        from pyramid.config import Configurator
-        from pyramid_rest import includeme
-        config = Configurator(settings=None)
-        config.include(includeme)
-        return config
-
-
-class TestExampleController(TestController):
+    _config = None
 
     @reify
     def app(self):
-        from pyramid_rest.tests.functional import example
-        reload(example) # :-Q
-        self.config.scan(example)
-        self.config.commit()
         return webtest.TestApp(self.config.make_wsgi_app())
+
+    @property
+    def config(self):
+        if TestExampleController._config is None:
+            _config = Configurator(settings={})
+            _config.include('example')
+            TestExampleController._config = _config
+        return TestExampleController._config

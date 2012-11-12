@@ -102,69 +102,68 @@ class TestResourceUtility(unittest.TestCase):
 
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}',
-                name='dad_item',
+                pattern='/dads/new',
+                name='dad_new',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[0]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad',
-                name='dad',
+                pattern='/dads/{id0}',
+                name='dad_item',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[1]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad/new',
-                name='dad_new',
+                pattern='/dads/{id0}/edit',
+                name='dad_edit',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[2]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}/edit',
-                name='dad_edit',
+                pattern='/dads',
+                name='dad_collection',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[3]
             )
-
         ru._add(config, kid)
         self.assertEqual({'dad': dad, 'dad.kid': kid}, ru.resources)
         self.assertEqual({'dad': dad}, ru.parent_resources)
 
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}/kid/{id1}',
-                name='dad.kid_item',
+                pattern='/dads/{id0}/kids/new',
+                name='dad.kid_new',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[4]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}/kid',
-                name='dad.kid',
+                pattern='/dads/{id0}/kids/{id1}',
+                name='dad.kid_item',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[5]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}/kid/new',
-                name='dad.kid_new',
+                pattern='/dads/{id0}/kids/{id1}/edit',
+                name='dad.kid_edit',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[6]
             )
         self.assertEqual(
             mock.call(
-                pattern='/dad/{id0}/kid/{id1}/edit',
-                name='dad.kid_edit',
+                pattern='/dads/{id0}/kids',
+                name='dad.kid_collection',
                 factory=m_functools.partial.return_value,
                 ),
             config.add_route.call_args_list[7]
@@ -204,23 +203,23 @@ class TestResourceUtility(unittest.TestCase):
 
         # check dad views:
         print config.add_view.call_args_list[0]
-        self._check_add_view(dad_index, 'index', 'GET', 'dad', config.add_view.call_args_list[0])
+        self._check_add_view(dad_index, 'index', 'GET', 'dad_collection', config.add_view.call_args_list[0])
         self._check_add_view(dad_show, 'show', 'GET', 'dad_item', config.add_view.call_args_list[1])
 
         self._check_add_not_allowed(not_allowed_view, 'edit', 'GET', 'dad_edit', config.add_view.call_args_list[2])
         self._check_add_not_allowed(not_allowed_view, 'new', 'GET', 'dad_new', config.add_view.call_args_list[3])
-        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad', config.add_view.call_args_list[4])
+        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad_collection', config.add_view.call_args_list[4])
         self._check_add_not_allowed(not_allowed_view, 'update', 'PUT', 'dad_item', config.add_view.call_args_list[5])
         self._check_add_not_allowed(not_allowed_view, 'delete', 'DELETE', 'dad_item', config.add_view.call_args_list[6])
 
         # check kid views:
 
-        self._check_add_view(kid_index, 'index', 'GET', 'dad.kid', config.add_view.call_args_list[7])
+        self._check_add_view(kid_index, 'index', 'GET', 'dad.kid_collection', config.add_view.call_args_list[7])
         self._check_add_view(kid_show, 'show', 'GET', 'dad.kid_item', config.add_view.call_args_list[8])
 
         self._check_add_not_allowed(not_allowed_view, 'edit', 'GET', 'dad.kid_edit', config.add_view.call_args_list[9])
         self._check_add_not_allowed(not_allowed_view, 'new', 'GET', 'dad.kid_new', config.add_view.call_args_list[10])
-        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad.kid', config.add_view.call_args_list[11])
+        self._check_add_not_allowed(not_allowed_view, 'create', 'POST', 'dad.kid_collection', config.add_view.call_args_list[11])
         self._check_add_not_allowed(not_allowed_view, 'update', 'PUT', 'dad.kid_item', config.add_view.call_args_list[12])
         self._check_add_not_allowed(not_allowed_view, 'delete', 'DELETE', 'dad.kid_item', config.add_view.call_args_list[13])
 

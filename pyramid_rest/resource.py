@@ -73,6 +73,12 @@ class ResourceUtility(object):
         edit='GET',
         )
 
+    singular_methods = dict(
+        show='GET',
+        update='PUT',
+        edit='GET',
+        )
+
     def __init__(self, separator='.'):
         self.resources = dict()
         self.parent_resources = dict()
@@ -80,8 +86,22 @@ class ResourceUtility(object):
         self.separator = separator
         self.methods_configs = dict()
 
-    def add_resource(self, config, resource_name, plural_name=None, documentation="", acl=None):
-        res = resource_config(resource_name, plural_name, documentation, acl)
+    def add_resource(
+        self,
+        config,
+        resource_name,
+        plural_name=None,
+        singular=False,
+        documentation="",
+        acl=None,
+        ):
+        res = resource_config(
+            resource_name,
+            plural_name,
+            singular,
+            documentation,
+            acl,
+            )
 
         class_name = ''.join(a.title() for a in res.collection_name.split("."))
         module_name = res.collection_name.replace('.', '_')
@@ -106,14 +126,14 @@ class ResourceUtility(object):
     def _add(self, config, resource):
         # XXX detect resource name duplicates
         try:
-            parent, child = resource.name.rsplit(self.separator, 1)
+            parent, child = resource.collection_name.rsplit(self.separator, 1)
             if parent not in self.resources:
                 self.deferred[resource.name] = resource
                 return
         except ValueError:
             # no separator in resource name: it is a root resource
             parent = None
-            child = resource.name
+            child = resource.collection_name
 
         if parent is None:
             self.parent_resources[resource.name] = resource
@@ -128,22 +148,34 @@ class ResourceUtility(object):
             resource.depth = resource.parent.depth + 1
             parent_pattern = resource.parent.item_pattern
 
-        # routes names:
-        resource.route_name = "%s" % resource.name
-        resource.item_route_name = "%s_item" % resource.name
-        resource.new_route_name = '%s_new' % resource.name
-        resource.edit_route_name = '%s_edit' % resource.name
+        if resource.singular:
+            # route names
+            resource.route_name = resource.name
+            resource.edit_route_name = '%s_edit' % resource.name
+            resource.item_route_name = None
+            resource.new_route_name = None
 
-        # routes patterns
-        resource.pattern = '%s/%s' % (parent_pattern, child)
-        # XXX: provides a way to specify id pattern
-        resource.item_pattern = '%s/%s/{id%s}' % (
-            parent_pattern,
-            child,
-            resource.depth
-            )
-        resource.new_pattern = '%s/new' % resource.pattern
-        resource.edit_pattern = '%s/edit' % resource.item_pattern
+            # routes patterns
+            resource.pattern = '%s/%s' % (parent_pattern, child)
+            resource.edit_pattern = '%s/edit' % resource.pattern
+            resource.item_pattern = None
+            resource.new_pattern = None
+        if not resource.singular:
+            # routes names:
+            resource.route_name = "%s_collection" % resource.name
+            resource.item_route_name = "%s_item" % resource.name
+            resource.new_route_name = '%s_new' % resource.name
+            resource.edit_route_name = '%s_edit' % resource.name
+
+            # routes patterns
+            resource.pattern = '%s/%s' % (parent_pattern, child)
+            resource.item_pattern = '%s/%s/{id%s}' % (
+                parent_pattern,
+                child,
+                resource.depth
+                )
+            resource.new_pattern = '%s/new' % resource.pattern
+            resource.edit_pattern = '%s/edit' % resource.item_pattern
 
         if config._ainfo is None:
             config._ainfo = []
@@ -153,10 +185,12 @@ class ResourceUtility(object):
         self._add_introspectable(config, resource)
         self.resources[resource.name] = resource
         log.info(
-            'Add REST resource="%s" parent="%s" views=%s',
+            'Add REST resource="%s" parent="%s" views=%s patterns=[%s, %s]',
             resource.name,
             resource.parent.name if resource.parent else None,
             resource.views.keys(),
+            resource.pattern,
+            resource.item_pattern,
             )
         self._add_deferred_children(config, resource)
 
@@ -170,24 +204,25 @@ class ResourceUtility(object):
     def _add_routes(self, config, resource):
         config._ainfo.append(ActionInfo(*resource.info.codeinfo))
         factory = functools.partial(ResourceContext, resource)
+        if not resource.singular:
+            config.add_route(
+                pattern='%s' % resource.new_pattern,
+                name='%s' % resource.new_route_name,
+                factory=factory,
+                )
+            config.add_route(
+                pattern=resource.item_pattern,
+                name=resource.item_route_name,
+                factory=factory,
+                )
         config.add_route(
-            pattern=resource.item_pattern,
-            name=resource.item_route_name,
+            pattern='%s' % resource.edit_pattern,
+            name='%s' % resource.edit_route_name,
             factory=factory,
             )
         config.add_route(
             pattern=resource.pattern,
             name=resource.route_name,
-            factory=factory,
-            )
-        config.add_route(
-            pattern='%s' % resource.new_pattern,
-            name='%s' % resource.new_route_name,
-            factory=factory,
-            )
-        config.add_route(
-            pattern='%s' % resource.edit_pattern,
-            name='%s' % resource.edit_route_name,
             factory=factory,
             )
         config._ainfo.pop()
@@ -211,7 +246,10 @@ class ResourceUtility(object):
                 **settings
                 )
 
-        not_allowed = [m for m in self.methods if m not in resource.views]
+        if not resource.singular:
+            not_allowed = [m for m in self.methods if m not in resource.views]
+        if resource.singular:
+            not_allowed = [m for m in self.singular_methods if m not in resource.views]
 
         for method in not_allowed:
             config.add_view(
@@ -231,9 +269,10 @@ class ResourceUtility(object):
         intr['resource'] = resource
         intr['documentation'] = resource.__doc__
         intr.relate('routes', resource.route_name)
-        intr.relate('routes', resource.item_route_name)
-        intr.relate('routes', resource.new_route_name)
         intr.relate('routes', resource.edit_route_name)
+        if not resource.singular:
+            intr.relate('routes', resource.item_route_name)
+            intr.relate('routes', resource.new_route_name)
 
         if resource.parent:
             intr.relate(cat_name, resource.parent.discriminator)
@@ -243,16 +282,24 @@ class ResourceUtility(object):
         config._ainfo.pop()
 
     def _get_view_predicates(self, resource, method):
-        return dict(
+        if not resource.singular:
             route_name={
-                'index':  resource.route_name,
+                'index': resource.route_name,
                 'create': resource.route_name,
-                'show':   resource.item_route_name,
+                'show': resource.item_route_name,
                 'delete': resource.item_route_name,
                 'update': resource.item_route_name,
-                'edit':   resource.edit_route_name,
-                'new':    resource.new_route_name,
-                }[method],
+                'edit': resource.edit_route_name,
+                'new': resource.new_route_name,
+                }[method]
+        if resource.singular:
+            route_name={
+                'show': resource.route_name,
+                'update': resource.route_name,
+                'edit': resource.edit_route_name,
+                }[method]
+        return dict(
+            route_name=route_name,
             permission=method,
             request_method=self.methods[method],
             )
@@ -275,18 +322,33 @@ class BaseResource(object):
     """
 
     methods = ('index', 'show', 'create', 'update', 'delete', 'new', 'edit')
+    singular_methods = ('show', 'update', 'edit')
 
-    def __init__(self, resource_name, plural_name=None, documentation="", acl=None):
+    def __init__(
+        self,
+        resource_name,
+        plural_name=None,
+        singular=False,
+        documentation="",
+        acl=None,
+        ):
 
         self.parent = None
         self.acl = acl
         self.name = resource_name
-        if plural_name:
-            name = resource_name.rpartition('.', 1)
+        self.singular = singular
+
+        if not self.singular and plural_name:
+            name = list(resource_name.rpartition('.'))
             name[-1] = plural_name
             self.collection_name = ''.join(name)
-        else:
+
+        if not self.singular and not plural_name:
             self.collection_name = '%ss' % resource_name
+
+        if self.singular:
+            self.collection_name = self.name
+
         self.views = dict()
         self._conflicts = dict()
         self.children = dict()
@@ -307,12 +369,31 @@ class BaseResource(object):
 class Resource(BaseResource):
     """Resource class"""
 
-    def __init__(self, resource_name, plural_name=None, documentation="", acl=None):
-        super(Resource, self).__init__(resource_name, plural_name, documentation, acl)
+    def __init__(
+        self,
+        resource_name,
+        plural_name=None,
+        singular=False,
+        documentation="",
+        acl=None,
+        ):
+        super(Resource, self).__init__(
+            resource_name,
+            plural_name,
+            singular,
+            documentation,
+            acl,
+            )
         self.info = venusian.attach(self, self.callback)
 
         # define REST decorators
-        for method in self.methods:
+        if not self.singular:
+            iter_methods = iter(self.methods)
+
+        if self.singular:
+            iter_methods = iter(self.singular_methods)
+
+        for method in iter_methods:
             setattr(self, method, functools.partial(self.decorator, method))
 
     def decorator(self, method, **kwargs):
@@ -339,10 +420,10 @@ class resource_config(BaseResource):
     def __call__(self, cls):
         self.info = venusian.attach(cls, self.callback, category='pyramid')
         self.__doc__ = cls.__doc__
-
+        methods = self.singular_methods if self.singular else self.methods
         views = inspect.getmembers(
             cls,
-            lambda m: inspect.ismethod(m) and m.__name__ in self.methods
+            lambda m: inspect.ismethod(m) and m.__name__ in methods
             )
         for name, view in views:
             self.views[name] = ViewInfo(view, self.info, name, {})

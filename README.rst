@@ -6,19 +6,25 @@ Pyramid REST
 
     * resource definition which configure routes/views, i.e:
 
-        * a resource 'applications' will configure:
+        * a resource 'application':
 
             * route [GET/POST] /applications
             * route [GET/DELETE/PUT] /applications/{id0}
             * route GET /applications/{id0}/new
             * route GET /applications/{id0}/edit
 
-        * a resource 'applications.users' will configure:
+        * a resource 'application.user':
 
             * route [GET/POST] /applications/{id0}/users
             * route [GET/DELETE/PUT] /applications/{id0}/users/{id1}
             * route GET /applications/{id0}/users/new
             * route GET /applications/{id0}/users/edit
+
+        * a singular resource 'application.user.score':
+
+            * route [GET/PUT] /applications/{id0}/users/{id1}/score
+            * route GET /applications/{id0}/users/{id1}/score/edit
+
 
     * resources are added to config introspector and related to their routes,views, sub-resource and parent resource;
     * end user defines REST methods (index, create, show, update, delete, new, edit);

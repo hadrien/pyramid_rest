@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 from pyramid_rest.resource import Resource, resource_config, method_config
 
 _USERS = {}
 
-users = Resource('users')
+users = Resource('user')
+
 
 @users.index()
 def list_users(context, request):
@@ -12,19 +12,24 @@ def list_users(context, request):
 
 @users.create()
 def create_user(context, request):
-    return
+    pass
 
 
-
-messages = Resource('users.messages')
+messages = Resource('user.message')
 
 @messages.index()
 def get_user_messages(context, request, user_id):
     return
 
 
+user_summary = Resource('user.summary', singular=True)
 
-@resource_config('users.score')
+@user_summary.show()
+def get_user_summary(context, request, user_id):
+    return {'summary': {}}
+
+
+@resource_config('user.score', singular=True)
 class UserScore(object):
 
     def __init__(self, context, request):
@@ -36,3 +41,4 @@ class UserScore(object):
     @method_config(renderer='example.mako')
     def edit(self, user_id):
         return {}
+
