@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pyramid.testing import DummyRequest
+
 from pyramid_rest.tests.functional import TestExampleController
 
 
@@ -66,3 +68,42 @@ class TestResource(TestExampleController):
     def test_view_not_found(self):
         self.assertRaises(ImportError, self.config.add_resource, 'no.such.resource')
 
+    def test_resource_get_collection_paths(self):
+        from pyramid_rest.resource import IResourceUtility
+        utility = self.config.registry.getUtility(IResourceUtility)
+        application_users = utility.resources['application.user']
+
+        self.assertRaises(ValueError, application_users.get_path)
+
+        self.assertEqual(
+            '/applications/1/users',
+            application_users.get_path(1)
+            )
+
+        self.assertEqual(
+            '/applications/1/users/2',
+            application_users.get_path(1, 2)
+            )
+
+
+    def test_resource_get_singular_path(self):
+        from pyramid_rest.resource import IResourceUtility
+        utility = self.config.registry.getUtility(IResourceUtility)
+        score = utility.resources['application.user.score']
+
+        self.assertRaises(ValueError, score.get_path)
+        self.assertRaises(ValueError, score.get_path, 1,)
+        self.assertRaises(ValueError, score.get_path, 1, 2, 3)
+
+        self.assertEqual(
+            '/applications/1/users/2/score',
+            score.get_path(1, 2)
+            )
+
+    def test_resource_path(self):
+        from pyramid_rest.resource import IResourceUtility
+        utility = self.config.registry.getUtility(IResourceUtility)
+        self.assertEqual(
+            '/applications/1/users/2/score',
+            utility.resource_path('application.user.score', 1, 2)
+            )

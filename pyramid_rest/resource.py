@@ -304,6 +304,10 @@ class ResourceUtility(object):
             request_method=self.methods[method],
             )
 
+    def resource_path(self, resource_name, *ids):
+        resource = self.resources[resource_name]
+        return resource.get_path(*ids)
+
 
 class ViewInfo(object):
 
@@ -364,6 +368,37 @@ class BaseResource(object):
     def callback(self, context, name, ob):
         config = context.config.with_package(self.info.module)
         config.registry.getUtility(IResourceUtility)._add(config, self)
+
+    def get_path(self, *args):
+        """Generates a path (aka a ‘relative URL’, a URL minus the host, scheme,
+           and port) for the rest resource.
+           :param args: List of ids.
+        """
+        if (len(args) < self.depth
+            or len(args) > self.depth+1
+            or (self.singular and len(args) != self.depth)
+            ):
+            raise ValueError('Need between %s and %s ids, received %s' % (
+                self.depth,
+                self.depth+1,
+                len(args),
+                ))
+
+        ids = dict(zip(
+            ['id%s' % l for l in xrange(len(args))],
+            args,
+            ))
+        if self.singular:
+            return self.pattern.format(**ids)
+
+        is_collection_path = (len(args) == self.depth)
+        is_item_path = (len(args) == self.depth+1)
+
+        if is_collection_path:
+            return self.pattern.format(**ids)
+
+        if is_item_path:
+            return self.item_pattern.format(**ids)
 
 
 class Resource(BaseResource):

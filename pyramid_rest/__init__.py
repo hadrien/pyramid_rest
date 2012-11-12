@@ -7,7 +7,7 @@ from pyramid.events import NewRequest
 from pyramid.response import Response
 from pyramid.settings import asbool
 
-from pyramid_rest.resource import ResourceUtility
+from pyramid_rest.resource import ResourceUtility, IResourceUtility
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,16 @@ def override_request_method(event):
         event.request.method = override
 
 
+def rest_resource_url(request, resource_name, *args):
+    utility = request.registry.getUtility(IResourceUtility)
+    return request.host_url + utility.resource_path(resource_name, *args)
+
+
+def rest_resource_path(request, resource_name, *args):
+    utility = request.registry.getUtility(IResourceUtility)
+    return utility.resource_path(resource_name, *args)
+
+
 def includeme(config):
     log.info('Including pyramid_rest')
 
@@ -48,6 +58,8 @@ def includeme(config):
         'add_singular_resource',
         functools.partial(utility.add_resource, singular=True),
         )
+    config.add_request_method(rest_resource_url, 'rest_resource_url')
+    config.add_request_method(rest_resource_path, 'rest_resource_path')
 
     if asbool(config.registry.settings.get('pyramid_rest.tunneling', 'true')):
         config.add_subscriber_predicate(
