@@ -72,10 +72,14 @@ What next?
 ----------
 
 #. Url generation:
+
    * resource.get_url()
    * resource.get_path()
    * utility.resource_url()
    * utility.resource_path()
+
+#. Support for non-collection resource;
+#. Force identifier names.
 #. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
