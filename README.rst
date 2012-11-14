@@ -71,18 +71,11 @@ Pyramid REST
 What next?
 ----------
 
-#. Singular name in resource;
-#. Naming conventions:
-   * resource name: application.user
-   * view: .views.application_users:ApplicationUsersView
-#. Full test coverage;
 #. Url generation:
    * resource.get_url()
    * resource.get_path()
    * utility.resource_url()
    * utility.resource_path()
-#. Support for non-collection resource;
-#. Force identifier names.
 #. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
