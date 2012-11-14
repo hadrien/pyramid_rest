@@ -106,7 +106,6 @@ class ResourceConfigurator(object):
         try:
             cls = config.maybe_dotted(dotted_class)
         except ImportError:
-            # Make message is more explicit
             raise ImportError('No class %s found.' % dotted_class)
         config.scan(dotted_module)
 
@@ -429,6 +428,7 @@ class BaseResource(object):
 
         :param args: List of ids.
         """
+        # TODO: purge this as it does not work if config is included with prefix
         if (len(args) < self.depth
             or len(args) > self.depth+1
             or (self.singular and len(args) != self.depth)
