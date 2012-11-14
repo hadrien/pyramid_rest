@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import functools
-import json
 import logging
 
 from pyramid.events import NewRequest
-from pyramid.response import Response
 from pyramid.settings import asbool
 
-from pyramid_rest.resource import ResourceUtility, IResourceUtility
+from pyramid_rest.resource import ResourceConfigurator, IResourceConfigurator
 
 log = logging.getLogger(__name__)
 
@@ -37,19 +35,19 @@ def override_request_method(event):
 
 
 def rest_resource_url(request, resource_name, *args):
-    utility = request.registry.getUtility(IResourceUtility)
+    utility = request.registry.getUtility(IResourceConfigurator)
     return request.host_url + utility.resource_path(resource_name, *args)
 
 
 def rest_resource_path(request, resource_name, *args):
-    utility = request.registry.getUtility(IResourceUtility)
+    utility = request.registry.getUtility(IResourceConfigurator)
     return utility.resource_path(resource_name, *args)
 
 
 def includeme(config):
     log.info('Including pyramid_rest')
 
-    utility = ResourceUtility()
+    utility = ResourceConfigurator()
 
     config.registry.registerUtility(utility)
 

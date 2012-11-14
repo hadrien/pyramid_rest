@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from docutils.parsers.rst.directives import unchanged
-from sphinx.util.compat import Directive, nodes
+from sphinx.util.compat import Directive
 
 from pyramid.config import Configurator
 

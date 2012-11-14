@@ -16,10 +16,10 @@ class TestRoutePatternIds(unittest.TestCase):
         return config
 
     def test_wrong_parent_id_names(self):
-        from pyramid_rest.resource import Resource, ResourceUtility
+        from pyramid_rest.resource import Resource, ResourceConfigurator
 
         config = self._get_config()
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
 
         # add parents:
         ru._add(config, Resource('application'))

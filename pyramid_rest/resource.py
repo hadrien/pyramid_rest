@@ -2,11 +2,10 @@
 import functools
 import inspect
 import logging
-import json
 
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPMethodNotAllowed
-from pyramid.config.util import ActionInfo, action_method
+from pyramid.config.util import ActionInfo
 
 import venusian
 
@@ -50,7 +49,7 @@ class ClassViewMapper(ViewMapper):
         return wrapper
 
 
-class IResourceUtility(Interface):
+class IResourceConfigurator(Interface):
     pass
 
 
@@ -58,8 +57,8 @@ def not_allowed_view(request):
     raise HTTPMethodNotAllowed()
 
 
-@implementer(IResourceUtility)
-class ResourceUtility(object):
+@implementer(IResourceConfigurator)
+class ResourceConfigurator(object):
 
     methods = dict(
         index='GET',
@@ -353,8 +352,8 @@ class BaseResource(object):
                                 *resource_name* if it's not provided.
     """
 
-    methods = tuple(ResourceUtility.methods.keys())
-    singular_methods = tuple(ResourceUtility.singular_methods.keys())
+    methods = tuple(ResourceConfigurator.methods.keys())
+    singular_methods = tuple(ResourceConfigurator.singular_methods.keys())
 
     def __init__(
         self,
@@ -422,7 +421,7 @@ class BaseResource(object):
 
     def callback(self, context, name, ob):
         config = context.config.with_package(self.info.module)
-        config.registry.getUtility(IResourceUtility)._add(config, self)
+        config.registry.getUtility(IResourceConfigurator)._add(config, self)
 
     def get_path(self, *args):
         """Generate a path (aka a 'relative URL', a URL minus the host, scheme,
@@ -525,7 +524,7 @@ class resource_config(BaseResource):
 
     def callback(self, context, name, ob):
         config = context.config.with_package(self.info.module)
-        utility = config.registry.getUtility(IResourceUtility)
+        utility = config.registry.getUtility(IResourceConfigurator)
         method_configs = utility.methods_configs.get(ob, {})
         self.update_views_settings(method_configs)
         super(resource_config, self).callback(context, name, ob)
@@ -543,11 +542,11 @@ class method_config(object):
 
     def callback(self, context, name, ob):
         # callback may be called twice as 2 scans might be done:
-        ## 1st is done when in ResourceUtility.add_resource
+        ## 1st is done when in ResourceConfigurator.add_resource
         ## 2nd might be done by the end user
         if self.method is not None:
             config = context.config.with_package(self.info.module)
-            utility = config.registry.getUtility(IResourceUtility)
+            utility = config.registry.getUtility(IResourceConfigurator)
             utility.add_method_config(ob, self.method.func_name, self.settings)
             self.method = None
 

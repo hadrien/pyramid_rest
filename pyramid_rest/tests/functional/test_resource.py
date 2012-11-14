@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-from pyramid.testing import DummyRequest
-
 from pyramid_rest.tests.functional import TestExampleController
 
 
 class TestResource(TestExampleController):
 
     def test_method_not_allowed(self):
-        result = self.app.put('/users/123', status=405)
-        pass
+        self.app.put('/users/123', status=405)
 
     def test_application(self):
         self.app.get('/applications/1', status=405)
@@ -69,8 +66,8 @@ class TestResource(TestExampleController):
         self.assertRaises(ImportError, self.config.add_resource, 'no.such.resource')
 
     def test_resource_get_collection_paths(self):
-        from pyramid_rest.resource import IResourceUtility
-        utility = self.config.registry.getUtility(IResourceUtility)
+        from pyramid_rest.resource import IResourceConfigurator
+        utility = self.config.registry.getUtility(IResourceConfigurator)
         application_users = utility.resources['application.user']
 
         self.assertRaises(ValueError, application_users.get_path)
@@ -85,10 +82,9 @@ class TestResource(TestExampleController):
             application_users.get_path(1, 2)
             )
 
-
     def test_resource_get_singular_path(self):
-        from pyramid_rest.resource import IResourceUtility
-        utility = self.config.registry.getUtility(IResourceUtility)
+        from pyramid_rest.resource import IResourceConfigurator
+        utility = self.config.registry.getUtility(IResourceConfigurator)
         score = utility.resources['application.user.score']
 
         self.assertRaises(ValueError, score.get_path)
@@ -101,8 +97,8 @@ class TestResource(TestExampleController):
             )
 
     def test_resource_path(self):
-        from pyramid_rest.resource import IResourceUtility
-        utility = self.config.registry.getUtility(IResourceUtility)
+        from pyramid_rest.resource import IResourceConfigurator
+        utility = self.config.registry.getUtility(IResourceConfigurator)
         self.assertEqual(
             '/applications/1/users/2/score',
             utility.resource_path('application.user.score', 1, 2)

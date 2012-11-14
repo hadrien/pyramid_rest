@@ -5,7 +5,6 @@ import webtest
 
 from pyramid.config import Configurator
 from pyramid.decorator import reify
-from pyramid.exceptions import ConfigurationConflictError
 
 
 class TestExampleController(unittest.TestCase):

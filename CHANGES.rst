@@ -1,3 +1,4 @@
+* Rename ResourceUtility to ResourceConfigurator to make its role clearer.
 * Force human-friendly names for route pattern variables and view callable
   parameters, e.g. /applications/{application_id}/users/{id} and
   show(context, request, application_id, id)

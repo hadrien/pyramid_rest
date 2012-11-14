@@ -6,7 +6,7 @@ import mock
 
 class TestIncludeme(unittest.TestCase):
 
-    @mock.patch('pyramid_rest.ResourceUtility')
+    @mock.patch('pyramid_rest.ResourceConfigurator')
     def test_includeme(self, m_utility):
         from pyramid_rest import (
             includeme,

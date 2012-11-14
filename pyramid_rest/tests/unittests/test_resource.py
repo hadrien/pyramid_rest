@@ -26,7 +26,7 @@ class TestFunctionViewMapper(unittest.TestCase):
 
 
 
-class TestResourceUtility(unittest.TestCase):
+class TestResourceConfigurator(unittest.TestCase):
 
     def _get_config(self):
         from pyramid.config import Introspectable, Configurator
@@ -35,11 +35,9 @@ class TestResourceUtility(unittest.TestCase):
         return config
 
     def test_init(self):
-        from pyramid_rest.resource import ResourceUtility
+        from pyramid_rest.resource import ResourceConfigurator
 
-        config = self._get_config()
-
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
 
         self.assertEqual(
             dict(
@@ -55,7 +53,7 @@ class TestResourceUtility(unittest.TestCase):
             )
 
     def test_add_sub_resource(self):
-        from pyramid_rest.resource import ResourceUtility, Resource
+        from pyramid_rest.resource import ResourceConfigurator, Resource
 
         dad = Resource('dad')
         kid = Resource('dad.kid')
@@ -64,7 +62,7 @@ class TestResourceUtility(unittest.TestCase):
 
         # kid is a sub resource:
         # Resource utility must defer processing until parent resource is added
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
         ru._add(config, kid)
 
         self.assertEqual({'dad.kid': kid}, ru.deferred)
@@ -73,18 +71,14 @@ class TestResourceUtility(unittest.TestCase):
 
     @mock.patch('pyramid_rest.resource.functools')
     def test_add_resources_route(self, m_functools):
-        from pyramid_rest.resource import (
-            ResourceUtility,
-            Resource,
-            ResourceContext,
-            )
+        from pyramid_rest.resource import ResourceConfigurator, Resource
 
         kid = Resource('dad.kid')
         dad = Resource('dad')
 
         config = self._get_config()
 
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
 
         ru._add(config, dad)
 
@@ -162,9 +156,8 @@ class TestResourceUtility(unittest.TestCase):
 
     def test_add_resources_add_views(self):
         from pyramid_rest.resource import (
-            ResourceUtility,
+            ResourceConfigurator,
             Resource,
-            ResourceContext,
             not_allowed_view,
             )
 
@@ -179,7 +172,7 @@ class TestResourceUtility(unittest.TestCase):
 
         config = self._get_config()
 
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
         ru._validate_views_args_name = lambda a: a
 
         # simulate decorating methods:
@@ -231,7 +224,6 @@ class TestResourceUtility(unittest.TestCase):
             )
 
     def _check_add_not_allowed(self, view, permission, request_method, route_name, real_call):
-        from pyramid_rest.resource import FunctionViewMapper
         self.assertEqual(
             mock.call(
                 view=view,
@@ -295,7 +287,7 @@ class TestResource(unittest.TestCase):
             )
 
     def test_callback(self):
-        from pyramid_rest.resource import Resource, IResourceUtility
+        from pyramid_rest.resource import Resource, IResourceConfigurator
 
         context = mock.Mock()
 
@@ -310,7 +302,7 @@ class TestResource(unittest.TestCase):
         (config
             .registry
             .getUtility
-            .assert_called_once_with(IResourceUtility)
+            .assert_called_once_with(IResourceConfigurator)
             )
 
         (config
@@ -323,7 +315,7 @@ class TestResource(unittest.TestCase):
 
     @mock.patch('pyramid_rest.resource.ActionInfo')
     def test_callback_view(self, m_action_info):
-        from pyramid_rest.resource import Resource, IResourceUtility
+        from pyramid_rest.resource import Resource
 
         context = mock.Mock()
         view = mock.Mock()
@@ -345,10 +337,10 @@ class TestResource(unittest.TestCase):
 
     def test_lineage_ids(self):
         from pyramid.config import Configurator
-        from pyramid_rest.resource import Resource, ResourceUtility
+        from pyramid_rest.resource import Resource, ResourceConfigurator
 
         config = Configurator(settings={})
-        ru = ResourceUtility()
+        ru = ResourceConfigurator()
 
         dad = Resource('dad')
         kid = Resource('dad.kid')
