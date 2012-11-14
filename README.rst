@@ -82,12 +82,14 @@ What next?
    * utility.resource_url()
    * utility.resource_path()
 #. Support for non-collection resource;
+#. Force identifier names.
 #. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
 #. Validation;
 #. Pagination;
 #. Automatic resource definition of SQLAlchemy entities;
+#. Have a view parameter in add_resource to override view definition;
 
 
 Code/Feedbacks

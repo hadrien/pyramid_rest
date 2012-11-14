@@ -4,6 +4,7 @@ import inspect
 import logging
 import json
 
+from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPMethodNotAllowed
 from pyramid.config.util import ActionInfo, action_method
 
@@ -20,9 +21,6 @@ class ViewMapper(object):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def _ordered_ids(self, matchdict):
-        return [matchdict[i] for i in sorted(matchdict.keys())]
-
 
 class FunctionViewMapper(ViewMapper):
 
@@ -33,7 +31,7 @@ class FunctionViewMapper(ViewMapper):
             return view(
                 context,
                 request,
-                *self._ordered_ids(request.matchdict)
+                **request.matchdict
                 )
 
         return wrapper
@@ -46,7 +44,7 @@ class ClassViewMapper(ViewMapper):
         def wrapper(context, request):
             return view(
                 view.im_class(context, request),
-                *self._ordered_ids(request.matchdict)
+                **request.matchdict
                 )
 
         return wrapper
@@ -79,11 +77,10 @@ class ResourceUtility(object):
         edit='GET',
         )
 
-    def __init__(self, separator='.'):
+    def __init__(self):
         self.resources = dict()
         self.parent_resources = dict()
         self.deferred = dict()
-        self.separator = separator
         self.methods_configs = dict()
 
     def add_resource(
@@ -126,7 +123,7 @@ class ResourceUtility(object):
     def _add(self, config, resource):
         # XXX detect resource name duplicates
         try:
-            parent, child = resource.collection_name.rsplit(self.separator, 1)
+            parent, child = resource.collection_name.rsplit('.', 1)
             if parent not in self.resources:
                 self.deferred[resource.name] = resource
                 return
@@ -139,14 +136,17 @@ class ResourceUtility(object):
             self.parent_resources[resource.name] = resource
             resource.parent = None
             resource.depth = 0
-            parent_pattern = ''
         else:
             # resource knows about parent
             resource.parent = self.resources[parent]
             # parent knows about new child
             resource.parent.children[resource.name] = resource
             resource.depth = resource.parent.depth + 1
-            parent_pattern = resource.parent.item_pattern
+
+        if resource.parent:
+            parent_pattern = resource.parent.lineage_route_pattern
+        else:
+            parent_pattern = ''
 
         if resource.singular:
             # route names
@@ -160,7 +160,8 @@ class ResourceUtility(object):
             resource.edit_pattern = '%s/edit' % resource.pattern
             resource.item_pattern = None
             resource.new_pattern = None
-        if not resource.singular:
+
+        else:
             # routes names:
             resource.route_name = "%s_collection" % resource.name
             resource.item_route_name = "%s_item" % resource.name
@@ -169,17 +170,14 @@ class ResourceUtility(object):
 
             # routes patterns
             resource.pattern = '%s/%s' % (parent_pattern, child)
-            resource.item_pattern = '%s/%s/{id%s}' % (
-                parent_pattern,
-                child,
-                resource.depth
-                )
+            resource.item_pattern = '%s/{id}' % resource.pattern
             resource.new_pattern = '%s/new' % resource.pattern
             resource.edit_pattern = '%s/edit' % resource.item_pattern
 
         if config._ainfo is None:
             config._ainfo = []
 
+        self._validate_views_args_name(resource)
         self._add_routes(config, resource)
         self._add_views(config, resource)
         self._add_introspectable(config, resource)
@@ -196,10 +194,40 @@ class ResourceUtility(object):
 
     def _add_deferred_children(self, config, parent_resource):
         for name, child_resource in self.deferred.items():
-            parent_name, child_name = name.rsplit(self.separator, 1)
+            parent_name, child_name = name.rsplit('.', 1)
             if parent_name == parent_resource.name:
                 self.deferred.pop(name)
                 self._add(config, child_resource)
+
+    def _validate_views_args_name(self, resource):
+        not_last = resource.ids[:-1]
+
+        expectation = {
+            'index': not_last,
+            'create': not_last,
+            'show': resource.ids,
+            'update': resource.ids,
+            'delete': resource.ids,
+            'new': not_last,
+            'edit': resource.ids,
+            }
+
+        for view_info in resource.views.itervalues():
+            args_name = view_info.view.func_code.co_varnames
+            if inspect.isfunction(view_info.view):
+                expected = tuple(
+                    ['context', 'request']
+                    + expectation[view_info.method]
+                    )
+            else:
+                expected = tuple(['self'] + expectation[view_info.method])
+            if expected != args_name:
+                raise TypeError('resource=%s, view=%s, expected %s - got %s' % (
+                    resource,
+                    view_info.method,
+                    expected,
+                    args_name,
+                    ))
 
     def _add_routes(self, config, resource):
         config._ainfo.append(ActionInfo(*resource.info.codeinfo))
@@ -325,8 +353,8 @@ class BaseResource(object):
                                 *resource_name* if it's not provided.
     """
 
-    methods = ('index', 'show', 'create', 'update', 'delete', 'new', 'edit')
-    singular_methods = ('show', 'update', 'edit')
+    methods = tuple(ResourceUtility.methods.keys())
+    singular_methods = tuple(ResourceUtility.singular_methods.keys())
 
     def __init__(
         self,
@@ -341,6 +369,7 @@ class BaseResource(object):
         self.acl = acl
         self.name = resource_name
         self.singular = singular
+        self.short_name = self.name.rpartition('.')[-1]
 
         if not self.singular and plural_name:
             name = list(resource_name.rpartition('.'))
@@ -361,6 +390,32 @@ class BaseResource(object):
     def __repr__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.name)
 
+    @reify
+    def ids(self):
+        my_id = [] if self.singular else ['id']
+        if self.parent:
+            return self.lineage_ids[:-1] + my_id
+        return my_id
+
+
+    @reify
+    def lineage_ids(self):
+        """Return list of identifier names a child resource needs for its route
+        pattern.
+        """
+        id_name = self.short_name + '_id'
+        if self.parent:
+            return self.parent.lineage_ids + [id_name]
+        return [id_name]
+
+    @reify
+    def lineage_route_pattern(self):
+        child = self.collection_name.rpartition('.')[2]
+        pattern = '/%s/{%s_id}' % (child, self.short_name)
+        if self.parent:
+            return self.parent.lineage_route_pattern + pattern
+        return pattern
+
     @property
     def discriminator(self):
         return ('pyramid_rest', repr(self))
@@ -370,9 +425,10 @@ class BaseResource(object):
         config.registry.getUtility(IResourceUtility)._add(config, self)
 
     def get_path(self, *args):
-        """Generates a path (aka a ‘relative URL’, a URL minus the host, scheme,
-           and port) for the rest resource.
-           :param args: List of ids.
+        """Generate a path (aka a 'relative URL', a URL minus the host, scheme,
+        and port) for the rest resource.
+
+        :param args: List of ids.
         """
         if (len(args) < self.depth
             or len(args) > self.depth+1
@@ -383,9 +439,8 @@ class BaseResource(object):
                 self.depth+1,
                 len(args),
                 ))
-
         ids = dict(zip(
-            ['id%s' % l for l in xrange(len(args))],
+            self.ids[:len(args)],
             args,
             ))
         if self.singular:

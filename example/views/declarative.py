@@ -14,6 +14,9 @@ def list_users(context, request):
 def create_user(context, request):
     pass
 
+@users.show()
+def get_user(context, request, id):
+    return {'id': 123}
 
 messages = Resource('user.message')
 

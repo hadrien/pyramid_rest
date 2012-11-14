@@ -13,7 +13,7 @@ class TestFunctionViewMapper(unittest.TestCase):
         view = mock.Mock()
         ctx = mock.Mock()
         req = mock.MagicMock()
-        req.matchdict.keys.return_value = ('id1', 'id0', 'id3', 'id2')
+        req.matchdict.__iter__.return_value = ('id1', 'id0', 'id3', 'id2')
 
         fvm = FunctionViewMapper(**kwargs)
         wrapped = fvm(view)
@@ -22,17 +22,8 @@ class TestFunctionViewMapper(unittest.TestCase):
         self.assertEqual(kwargs, fvm.kwargs)
         self.assertEqual(view.return_value, result)
 
-        ids = req.matchdict.__getitem__.return_value
+        view.assert_called_once_with(ctx, req, **req.matchdict)
 
-        view.assert_called_once_with(ctx, req, ids, ids, ids, ids)
-
-        # assert that ids are sorted alphabetically
-        for i in range(4):
-            id_ = 'id%s' % i
-            self.assertEqual(
-                mock.call(id_,),
-                req.matchdict.__getitem__.call_args_list[i]
-                )
 
 
 class TestResourceUtility(unittest.TestCase):
@@ -110,7 +101,7 @@ class TestResourceUtility(unittest.TestCase):
             )
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}',
+                pattern='/dads/{id}',
                 name='dad_item',
                 factory=m_functools.partial.return_value,
                 ),
@@ -118,7 +109,7 @@ class TestResourceUtility(unittest.TestCase):
             )
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}/edit',
+                pattern='/dads/{id}/edit',
                 name='dad_edit',
                 factory=m_functools.partial.return_value,
                 ),
@@ -138,7 +129,7 @@ class TestResourceUtility(unittest.TestCase):
 
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}/kids/new',
+                pattern='/dads/{dad_id}/kids/new',
                 name='dad.kid_new',
                 factory=m_functools.partial.return_value,
                 ),
@@ -146,7 +137,7 @@ class TestResourceUtility(unittest.TestCase):
             )
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}/kids/{id1}',
+                pattern='/dads/{dad_id}/kids/{id}',
                 name='dad.kid_item',
                 factory=m_functools.partial.return_value,
                 ),
@@ -154,7 +145,7 @@ class TestResourceUtility(unittest.TestCase):
             )
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}/kids/{id1}/edit',
+                pattern='/dads/{dad_id}/kids/{id}/edit',
                 name='dad.kid_edit',
                 factory=m_functools.partial.return_value,
                 ),
@@ -162,7 +153,7 @@ class TestResourceUtility(unittest.TestCase):
             )
         self.assertEqual(
             mock.call(
-                pattern='/dads/{id0}/kids',
+                pattern='/dads/{dad_id}/kids',
                 name='dad.kid_collection',
                 factory=m_functools.partial.return_value,
                 ),
@@ -189,6 +180,7 @@ class TestResourceUtility(unittest.TestCase):
         config = self._get_config()
 
         ru = ResourceUtility()
+        ru._validate_views_args_name = lambda a: a
 
         # simulate decorating methods:
         dad.index()(dad_index)
@@ -202,7 +194,7 @@ class TestResourceUtility(unittest.TestCase):
         self.assertEqual(14, config.add_view.call_count)
 
         # check dad views:
-        print config.add_view.call_args_list[0]
+
         self._check_add_view(dad_index, 'index', 'GET', 'dad_collection', config.add_view.call_args_list[0])
         self._check_add_view(dad_show, 'show', 'GET', 'dad_item', config.add_view.call_args_list[1])
 
@@ -350,6 +342,29 @@ class TestResource(unittest.TestCase):
         context.config._ainfo.pop.assert_called_once_with()
 
         m_action_info.assert_called_once_with(*view_info.info.codeinfo)
+
+    def test_lineage_ids(self):
+        from pyramid.config import Configurator
+        from pyramid_rest.resource import Resource, ResourceUtility
+
+        config = Configurator(settings={})
+        ru = ResourceUtility()
+
+        dad = Resource('dad')
+        kid = Resource('dad.kid')
+        grandchild = Resource('dad.kid.grandchild')
+
+        ru._add(config, dad)
+        ru._add(config, kid)
+        ru._add(config, grandchild)
+
+        self.assertEqual(['dad_id'], dad.lineage_ids)
+        self.assertEqual(['dad_id', 'kid_id'], kid.lineage_ids)
+        self.assertEqual(['dad_id', 'kid_id', 'grandchild_id'], grandchild.lineage_ids)
+
+        self.assertEqual(['id'], dad.ids)
+        self.assertEqual(['dad_id', 'id'], kid.ids)
+        self.assertEqual(['dad_id', 'kid_id', 'id'], grandchild.ids)
 
 
 class TestResourceContext(unittest.TestCase):

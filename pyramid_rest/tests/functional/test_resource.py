@@ -29,7 +29,7 @@ class TestResource(TestExampleController):
         self.assertEqual({}, self.app.post('/applications/1?_method=PUT').json)
 
         self.assertEqual({}, self.app.delete('/applications/1').json)
-        self.assertEqual({}, self.app.delete('/applications/1?_method=DELETE').json)
+        self.assertEqual({}, self.app.post('/applications/1?_method=DELETE').json)
 
     def test_application_users(self):
         self.assertEqual(
