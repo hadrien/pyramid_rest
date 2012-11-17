@@ -9,7 +9,6 @@ def includeme(config):
     config.include('pyramid_rest')
     config.include('pyramid_debugtoolbar')
 
-
     config.add_resource('application')
     config.add_resource('application.medium', plural_name='media')
     config.add_resource('application.user')

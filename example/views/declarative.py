@@ -14,11 +14,13 @@ def list_users(context, request):
 def create_user(context, request):
     pass
 
+
 @users.show()
 def get_user(context, request, id):
     return {'id': 123}
 
 messages = Resource('user.message')
+
 
 @messages.index()
 def get_user_messages(context, request, user_id):
@@ -26,6 +28,7 @@ def get_user_messages(context, request, user_id):
 
 
 user_summary = Resource('user.summary', singular=True)
+
 
 @user_summary.show()
 def get_user_summary(context, request, user_id):
@@ -44,4 +47,3 @@ class UserScore(object):
     @method_config(renderer='example.mako')
     def edit(self, user_id):
         return {}
-

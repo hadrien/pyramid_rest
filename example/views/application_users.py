@@ -15,4 +15,4 @@ class ApplicationUsersView(BaseView):
 
     @method_config(permission='admin')
     def show(self, application_id, id):
-        return dict(id=id, name= 'User %s' % id)
+        return dict(id=id, name='User %s' % id)

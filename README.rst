@@ -9,21 +9,21 @@ Pyramid REST
         * a resource 'application':
 
             * route [GET/POST] /applications
-            * route [GET/DELETE/PUT] /applications/{id0}
-            * route GET /applications/{id0}/new
-            * route GET /applications/{id0}/edit
+            * route [GET/DELETE/PUT] /applications/{application_id}
+            * route GET /applications/{application_id}/new
+            * route GET /applications/{application_id}/edit
 
         * a resource 'application.user':
 
-            * route [GET/POST] /applications/{id0}/users
-            * route [GET/DELETE/PUT] /applications/{id0}/users/{id1}
-            * route GET /applications/{id0}/users/new
-            * route GET /applications/{id0}/users/edit
+            * route [GET/POST] /applications/{application_id}/users
+            * route [GET/DELETE/PUT] /applications/{application_id}/users/{user_id}
+            * route GET /applications/{application_id}/users/new
+            * route GET /applications/{application_id}/users/edit
 
         * a singular resource 'application.user.score':
 
-            * route [GET/PUT] /applications/{id0}/users/{id1}/score
-            * route GET /applications/{id0}/users/{id1}/score/edit
+            * route [GET/PUT] /applications/{application_id}/users/{user_id}/score
+            * route GET /applications/{application_id}/users/{user_id}/score/edit
 
 
     * resources are added to config introspector and related to their routes,views, sub-resource and parent resource;
@@ -45,12 +45,13 @@ Pyramid REST
         app_users = Resource('application.user')
 
         @app_users.index()
-        def index(context, request):
+        def index(context, request, application_id):
             pass
 
         @app_users.show()
-        def show(context, request, app_id):
+        def show(context, request, application_id, id):
             pass
+
 
     #. Declarative using `resource_config` decorator::
 
@@ -60,11 +61,11 @@ Pyramid REST
             def __init__(self, context, request):
                 pass
 
-            def index(self):
+            def index(self, application_id):
                 return {}
 
             @method_config(renderer='example.mako')
-            def edit(self, app_id):
+            def edit(self, application_id, id):
                 return {}
 
 
@@ -73,13 +74,9 @@ What next?
 
 #. Url generation:
 
-   * resource.get_url()
-   * resource.get_path()
-   * utility.resource_url()
-   * utility.resource_path()
+   * request.rest_resource_url as resource_url is taken
+   * request.rest_resource_path as resource_path is taken
 
-#. Support for non-collection resource;
-#. Force identifier names.
 #. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
