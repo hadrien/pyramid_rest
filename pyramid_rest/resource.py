@@ -109,7 +109,7 @@ class ResourceConfigurator(object):
             raise ImportError('No class %s found.' % dotted_class)
         config.scan(dotted_module)
 
-        res(cls) # decorate class to register config
+        res(cls)  # decorate class to register config
         res.update_views_settings(self.methods_configs.get(cls, {}))
         self._add(config, res)
 
@@ -211,7 +211,8 @@ class ResourceConfigurator(object):
             }
 
         for view_info in resource.views.itervalues():
-            args_name = view_info.view.func_code.co_varnames
+            argscount = view_info.view.func_code.co_argcount
+            args_name = view_info.view.func_code.co_varnames[:argscount]
             if inspect.isfunction(view_info.view):
                 expected = tuple(
                     ['context', 'request']
@@ -264,7 +265,7 @@ class ResourceConfigurator(object):
                 attr = view_info.view.__name__
             settings = view_info.settings.copy()
             settings.update(self._get_view_predicates(resource, view_info.method))
-            settings.setdefault('renderer', 'json') # XXX: code a custom renderer
+            settings.setdefault('renderer', 'json')
             config.add_view(
                 view=view_info.view,
                 mapper=mapper,
@@ -309,7 +310,7 @@ class ResourceConfigurator(object):
 
     def _get_view_predicates(self, resource, method):
         if not resource.singular:
-            route_name={
+            route_name = {
                 'index': resource.route_name,
                 'create': resource.route_name,
                 'show': resource.item_route_name,
@@ -319,7 +320,7 @@ class ResourceConfigurator(object):
                 'new': resource.new_route_name,
                 }[method]
         if resource.singular:
-            route_name={
+            route_name = {
                 'show': resource.route_name,
                 'update': resource.route_name,
                 'edit': resource.edit_route_name,
@@ -395,7 +396,6 @@ class BaseResource(object):
             return self.lineage_ids[:-1] + my_id
         return my_id
 
-
     @reify
     def lineage_ids(self):
         """Return list of identifier names a child resource needs for its route
@@ -430,12 +430,12 @@ class BaseResource(object):
         """
         # TODO: purge this as it does not work if config is included with prefix
         if (len(args) < self.depth
-            or len(args) > self.depth+1
+            or len(args) > self.depth + 1
             or (self.singular and len(args) != self.depth)
             ):
             raise ValueError('Need between %s and %s ids, received %s' % (
                 self.depth,
-                self.depth+1,
+                self.depth + 1,
                 len(args),
                 ))
         ids = dict(zip(
@@ -446,7 +446,7 @@ class BaseResource(object):
             return self.pattern.format(**ids)
 
         is_collection_path = (len(args) == self.depth)
-        is_item_path = (len(args) == self.depth+1)
+        is_item_path = (len(args) == self.depth + 1)
 
         if is_collection_path:
             return self.pattern.format(**ids)

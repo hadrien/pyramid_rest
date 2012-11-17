@@ -1,4 +1,5 @@
 
+
 class BaseView(object):
 
     def __init__(self, context, request):

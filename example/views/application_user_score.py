@@ -1,7 +1,7 @@
 from example.views import BaseView
 
 
-class ApplicationUserScoreView():
+class ApplicationUserScoreView(BaseView):
 
     def update(self, application_id, user_id):
         pass

@@ -75,10 +75,8 @@ What next?
 #. Url generation:
 
    * request.rest_resource_url as resource_url is taken
-   * resource.rest_resource_path as resource_path is taken
+   * request.rest_resource_path as resource_path is taken
 
-#. Support for non-collection resource;
-#. Force identifier names.
 #. Resource Scaffolding command;
 #. Custom renderer which adapts response format depending on Accept header;
 #. Links;
