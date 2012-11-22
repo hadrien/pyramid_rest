@@ -25,13 +25,15 @@ class TestFunctionViewMapper(unittest.TestCase):
         view.assert_called_once_with(ctx, req, **req.matchdict)
 
 
-
 class TestResourceConfigurator(unittest.TestCase):
 
     def _get_config(self):
-        from pyramid.config import Introspectable, Configurator
+        from pyramid.config import Introspectable, Configurator, Registry
         config = mock.Mock(spec=Configurator)
-        config.introspectable.return_value = mock.MagicMock(spec=Introspectable)
+        config.introspectable.return_value = mock.MagicMock(
+            spec=Introspectable
+            )
+        config.registry = mock.MagicMock(spec=Registry)
         return config
 
     def test_init(self):

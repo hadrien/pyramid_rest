@@ -71,4 +71,7 @@ def includeme(config):
             request_methods=['POST'],
             )
 
+    if asbool(config.registry.settings.get('pyramid_rest.mongo', 'true')):
+        config.include('pyramid_rest.mongo')
+
     config.commit()

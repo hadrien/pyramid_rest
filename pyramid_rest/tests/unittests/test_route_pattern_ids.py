@@ -11,8 +11,9 @@ def wrong_ids_show(context, request, app_id, u_id, id):
 class TestRoutePatternIds(unittest.TestCase):
 
     def _get_config(self):
-        from pyramid.config import Configurator
+        from pyramid.config import Configurator, Registry
         config = mock.MagicMock(spec=Configurator)
+        config.registry = mock.MagicMock(spec=Registry)
         return config
 
     def test_wrong_parent_id_names(self):

@@ -24,16 +24,15 @@ class TestIncludeme(unittest.TestCase):
             m_utility.return_value
             )
 
-        config.registry.settings.get.assert_called_once_with(
-            'pyramid_rest.tunneling',
-            'true',
+        self.assertEqual(
+            mock.call('pyramid_rest.tunneling', 'true', ),
+            config.registry.settings.get.call_args_list[0],
             )
 
         config.add_subscriber_predicate.assert_called_once_with(
             'request_methods',
             RequestMethodEventPredicate
             )
-
 
         config.add_subscriber.assert_called_once_with(
             override_request_method,
@@ -58,14 +57,14 @@ class TestRequestMethodEventPredicate(unittest.TestCase):
     def test_predicate(self):
         from pyramid_rest import RequestMethodEventPredicate
 
-        pred = RequestMethodEventPredicate(['PUT', 'DELETE',], None)
+        pred = RequestMethodEventPredicate(['PUT', 'DELETE'], None)
 
         self.assertEqual(
             'request_method in %s' % ['PUT', 'DELETE'],
             pred.text()
             )
 
-        self.assertEqual(['PUT', 'DELETE',], pred.methods)
+        self.assertEqual(['PUT', 'DELETE'], pred.methods)
 
         event = mock.Mock()
         event.request.method = 'PUT'

@@ -53,6 +53,13 @@ class IResourceConfigurator(Interface):
     pass
 
 
+class ResourceAdded(object):
+    """Event notified after a resource is added and configured."""
+    def __init__(self, config, resource):
+        self.config = config
+        self.resource = resource
+
+
 def not_allowed_view(request):
     raise HTTPMethodNotAllowed()
 
@@ -188,6 +195,7 @@ class ResourceConfigurator(object):
             resource.pattern,
             resource.item_pattern,
             )
+        config.registry.notify(ResourceAdded(config, resource))
         self._add_deferred_children(config, resource)
 
     def _add_deferred_children(self, config, parent_resource):
@@ -221,7 +229,8 @@ class ResourceConfigurator(object):
             else:
                 expected = tuple(['self'] + expectation[view_info.method])
             if expected != args_name:
-                raise TypeError('resource=%s, view=%s, expected %s - got %s' % (
+                raise TypeError(
+                    'resource=%s, view=%s, expected %s - got %s' % (
                     resource,
                     view_info.method,
                     expected,
@@ -264,7 +273,9 @@ class ResourceConfigurator(object):
                 mapper = ClassViewMapper
                 attr = view_info.view.__name__
             settings = view_info.settings.copy()
-            settings.update(self._get_view_predicates(resource, view_info.method))
+            settings.update(
+                self._get_view_predicates(resource, view_info.method)
+                )
             settings.setdefault('renderer', 'json')
             config.add_view(
                 view=view_info.view,
@@ -276,7 +287,9 @@ class ResourceConfigurator(object):
         if not resource.singular:
             not_allowed = [m for m in self.methods if m not in resource.views]
         if resource.singular:
-            not_allowed = [m for m in self.singular_methods if m not in resource.views]
+            not_allowed = [m for m in self.singular_methods if (
+                m not in resource.views)
+                ]
 
         for method in not_allowed:
             config.add_view(
@@ -428,7 +441,7 @@ class BaseResource(object):
 
         :param args: List of ids.
         """
-        # TODO: purge this as it does not work if config is included with prefix
+        # TODO: purge this: it does not work if config is included with prefix
         if (len(args) < self.depth
             or len(args) > self.depth + 1
             or (self.singular and len(args) != self.depth)
@@ -508,6 +521,7 @@ class resource_config(BaseResource):
 
     def __call__(self, cls):
         self.info = venusian.attach(cls, self.callback, category='pyramid')
+        self.view_class = cls
         self.__doc__ = cls.__doc__
         methods = self.singular_methods if self.singular else self.methods
         views = inspect.getmembers(
