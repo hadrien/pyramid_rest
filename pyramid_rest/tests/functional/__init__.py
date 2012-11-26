@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
+import sys
 import unittest
 
 import webtest
 
-from pyramid.config import Configurator
-from pyramid.decorator import reify
+from pyramid import testing
 
 
 class TestExampleController(unittest.TestCase):
 
-    _config = None
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.include('example')
+        self.config.commit()
+        self.app = webtest.TestApp(self.config.make_wsgi_app())
 
-    @reify
-    def app(self):
-        return webtest.TestApp(self.config.make_wsgi_app())
-
-    @property
-    def config(self):
-        if TestExampleController._config is None:
-            _config = Configurator(settings={})
-            _config.include('example')
-            TestExampleController._config = _config
-        return TestExampleController._config
+    def tearDown(self):
+        testing.tearDown()
+        for m in list(sys.modules):
+            if 'example' in m:
+                del sys.modules[m]

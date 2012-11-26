@@ -1,5 +1,6 @@
 \.coverage
 \.noseids
+\.env
 coverage.xml
 nosetests.xml
 pyramid_rest\.egg-info

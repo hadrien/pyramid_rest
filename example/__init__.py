@@ -15,12 +15,22 @@ def includeme(config):
     config.add_singular_resource('application.user.score')
     config.add_singular_resource('health')
 
+    config.add_resource('message')
+
     config.scan()
 
 
-if __name__ == '__main__':
-    config = Configurator(settings={})
+def get_app(settings=None):
+    settings if settings else {}
+    config = Configurator(settings=settings)
     config.include('example')
-    app = config.make_wsgi_app()
-    server = make_server('0.0.0.0', 6543, app)
+    return config.make_wsgi_app()
+
+
+def main(global_config, **settings):
+    return get_app(settings)
+
+
+if __name__ == '__main__':
+    server = make_server('0.0.0.0', 6543, get_app())
     server.serve_forever()

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pyramid import testing
+
 from pyramid_rest.tests.functional import TestExampleController
 
 
@@ -13,12 +15,14 @@ class TestResource(TestExampleController):
         self.app.get('/applications/new', status=405)
         self.app.post('/applications', status=405)
 
-        self.assertEqual([
-            dict(id=1, name='App 1'),
-            dict(id=2, name='App 2'),
-            dict(id=3, name='App 3'),
-            dict(id=4, name='App 4'),
-            ],
+        self.assertEqual({
+            'data': [
+                dict(id=1, name='App 1'),
+                dict(id=2, name='App 2'),
+                dict(id=3, name='App 3'),
+                dict(id=4, name='App 4'),
+                ],
+            },
             self.app.get('/applications').json,
             )
 
@@ -26,11 +30,14 @@ class TestResource(TestExampleController):
         self.assertEqual({}, self.app.post('/applications/1?_method=PUT').json)
 
         self.assertEqual({}, self.app.delete('/applications/1').json)
-        self.assertEqual({}, self.app.post('/applications/1?_method=DELETE').json)
+        self.assertEqual(
+            {},
+            self.app.post('/applications/1?_method=DELETE').json
+            )
 
     def test_application_users(self):
-        self.assertEqual(
-            [dict(id='1', name='User 1'),
+        self.assertEqual([
+            dict(id='1', name='User 1'),
             dict(id='2', name='User 2'),
             dict(id='3', name='User 3'),
             dict(id='4', name='User 4'),
@@ -39,7 +46,7 @@ class TestResource(TestExampleController):
             )
 
         self.assertEqual(
-            dict(id='1', name= 'User 1'),
+            dict(id='1', name='User 1'),
             self.app.get('/applications/1/users/1').json,
             )
 
@@ -61,25 +68,25 @@ class TestResource(TestExampleController):
 
         self.app.post('/applications/1/media/1?_method=DELETE', status=405)
 
-
     def test_view_not_found(self):
-        self.assertRaises(ImportError, self.config.add_resource, 'no.such.resource')
+        with self.assertRaises(ImportError):
+            self.config.add_resource('no.such.resource')
 
     def test_resource_get_collection_paths(self):
         from pyramid_rest.resource import IResourceConfigurator
         utility = self.config.registry.getUtility(IResourceConfigurator)
         application_users = utility.resources['application.user']
 
-        self.assertRaises(ValueError, application_users.get_path)
+        self.assertRaises(ValueError, application_users.get_route_name)
 
         self.assertEqual(
-            '/applications/1/users',
-            application_users.get_path(1)
+            'application.user_collection',
+            application_users.get_route_name(1)
             )
 
         self.assertEqual(
-            '/applications/1/users/2',
-            application_users.get_path(1, 2)
+            'application.user_item',
+            application_users.get_route_name(1, 2)
             )
 
     def test_resource_get_singular_path(self):
@@ -87,19 +94,20 @@ class TestResource(TestExampleController):
         utility = self.config.registry.getUtility(IResourceConfigurator)
         score = utility.resources['application.user.score']
 
-        self.assertRaises(ValueError, score.get_path)
-        self.assertRaises(ValueError, score.get_path, 1,)
-        self.assertRaises(ValueError, score.get_path, 1, 2, 3)
+        self.assertRaises(ValueError, score.get_route_name)
+        self.assertRaises(ValueError, score.get_route_name, 1,)
+        self.assertRaises(ValueError, score.get_route_name, 1, 2, 3)
 
         self.assertEqual(
-            '/applications/1/users/2/score',
-            score.get_path(1, 2)
+            'application.user.score',
+            score.get_route_name(1, 2)
             )
 
     def test_resource_path(self):
         from pyramid_rest.resource import IResourceConfigurator
+        request = testing.DummyRequest()
         utility = self.config.registry.getUtility(IResourceConfigurator)
         self.assertEqual(
             '/applications/1/users/2/score',
-            utility.resource_path('application.user.score', 1, 2)
+            utility.resource_path(request, 'application.user.score', 1, 2)
             )

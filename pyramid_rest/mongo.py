@@ -96,7 +96,19 @@ class CollectionView(object):
 
     @reify
     def collection(self):
-        return getattr(self.request.mongo_db, self.model_class.__name__)
+        # model_class.__collection__ or model_class.__name__ as collection name
+        collection_name = getattr(
+            self.model_class,
+            '__collection__',
+            self.model_class.__name__,
+            )
+        return getattr(self.request.mongo_db, collection_name)
 
     def index(self):
         return {'data': list(self.collection.find())}
+
+
+class MultipleCollectionView(object):
+    # XXX: Usage of multiple collection for 1 document:
+    # http://www.mongodb.org/display/DOCS/Using+a+Large+Number+of+Collections
+    pass

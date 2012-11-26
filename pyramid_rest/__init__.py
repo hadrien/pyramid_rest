@@ -5,7 +5,11 @@ import logging
 from pyramid.events import NewRequest
 from pyramid.settings import asbool
 
-from pyramid_rest.resource import ResourceConfigurator, IResourceConfigurator
+from pyramid_rest.resource import (
+    ResourceConfigurator,
+    rest_resource_url,
+    rest_resource_path,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -34,22 +38,17 @@ def override_request_method(event):
         event.request.method = override
 
 
-def rest_resource_url(request, resource_name, *args):
-    utility = request.registry.getUtility(IResourceConfigurator)
-    return request.host_url + utility.resource_path(resource_name, *args)
-
-
-def rest_resource_path(request, resource_name, *args):
-    utility = request.registry.getUtility(IResourceConfigurator)
-    return utility.resource_path(resource_name, *args)
-
-
 def includeme(config):
     log.info('Including pyramid_rest')
 
     utility = ResourceConfigurator()
 
     config.registry.registerUtility(utility)
+
+    config.add_renderer(
+        'pyramid_rest_renderer',
+        'pyramid_rest.renderer.Factory'
+        )
 
     config.add_directive('add_resource', utility.add_resource)
     config.add_directive(

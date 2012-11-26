@@ -61,7 +61,8 @@ class ResourceAdded(object):
 
 
 def not_allowed_view(request):
-    raise HTTPMethodNotAllowed()
+    # FIXME using raise makes tests fail
+    return HTTPMethodNotAllowed()
 
 
 @implementer(IResourceConfigurator)
@@ -276,7 +277,7 @@ class ResourceConfigurator(object):
             settings.update(
                 self._get_view_predicates(resource, view_info.method)
                 )
-            settings.setdefault('renderer', 'json')
+            settings.setdefault('renderer', 'pyramid_rest_renderer')
             config.add_view(
                 view=view_info.view,
                 mapper=mapper,
@@ -344,9 +345,26 @@ class ResourceConfigurator(object):
             request_method=self.methods[method],
             )
 
-    def resource_path(self, resource_name, *ids):
+    def resource_path(self, request, resource_name, *args):
+        """Returns route name for ``resource_name`` with args"""
         resource = self.resources[resource_name]
-        return resource.get_path(*ids)
+        route_name = resource.get_route_name(*args)
+        ids = dict(zip(
+            resource.ids[:len(args)],
+            args,
+            ))
+        return request.route_path(route_name, **ids)
+
+
+def rest_resource_url(request, resource_name, *args):
+    utility = request.registry.getUtility(IResourceConfigurator)
+    path = utility.resource_path(request, resource_name, *args)
+    return request.host_url + path
+
+
+def rest_resource_path(request, resource_name, *args):
+    utility = request.registry.getUtility(IResourceConfigurator)
+    return utility.resource_path(request, resource_name, *args)
 
 
 class ViewInfo(object):
@@ -435,13 +453,12 @@ class BaseResource(object):
         config = context.config.with_package(self.info.module)
         config.registry.getUtility(IResourceConfigurator)._add(config, self)
 
-    def get_path(self, *args):
-        """Generate a path (aka a 'relative URL', a URL minus the host, scheme,
-        and port) for the rest resource.
+    def get_route_name(self, *args):
+        """Returns route name associated with that resource and the arguments
+        for url generation
 
         :param args: List of ids.
         """
-        # TODO: purge this: it does not work if config is included with prefix
         if (len(args) < self.depth
             or len(args) > self.depth + 1
             or (self.singular and len(args) != self.depth)
@@ -451,21 +468,17 @@ class BaseResource(object):
                 self.depth + 1,
                 len(args),
                 ))
-        ids = dict(zip(
-            self.ids[:len(args)],
-            args,
-            ))
         if self.singular:
-            return self.pattern.format(**ids)
+            return self.route_name
 
         is_collection_path = (len(args) == self.depth)
         is_item_path = (len(args) == self.depth + 1)
 
         if is_collection_path:
-            return self.pattern.format(**ids)
+            return self.route_name
 
         if is_item_path:
-            return self.item_pattern.format(**ids)
+            return self.item_route_name
 
 
 class Resource(BaseResource):

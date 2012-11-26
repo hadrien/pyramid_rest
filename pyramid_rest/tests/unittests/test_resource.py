@@ -217,7 +217,7 @@ class TestResourceConfigurator(unittest.TestCase):
                 view=view,
                 mapper=FunctionViewMapper,
                 attr=None,
-                renderer='json',
+                renderer='pyramid_rest_renderer',
                 permission=permission,
                 request_method=request_method,
                 route_name=route_name
@@ -236,11 +236,12 @@ class TestResourceConfigurator(unittest.TestCase):
             real_call,
             )
 
+
 class TestNotAllowedView(unittest.TestCase):
 
     def test_raising_http_not_allowed(self):
         from pyramid_rest.resource import not_allowed_view, HTTPMethodNotAllowed
-        self.assertRaises(HTTPMethodNotAllowed, not_allowed_view, None)
+        self.assertIsInstance(not_allowed_view(None), HTTPMethodNotAllowed, )
 
 
 class TestResource(unittest.TestCase):
@@ -301,6 +302,7 @@ class TestResource(unittest.TestCase):
             r.info.module
             )
         config = context.config.with_package.return_value
+
         (config
             .registry
             .getUtility

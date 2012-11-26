@@ -12,6 +12,9 @@ Development version
    a definition of a ``mongokit.Document`` can inherit
    ``pyramid_rest.mongo.DocumentView`` to inherit all default actions.
 
+* Add custom renderer which adapts output format depending on accept headers,
+  format supported are ``application/json`` & ``application/bson``
+
 
 0.1.0
 -----
