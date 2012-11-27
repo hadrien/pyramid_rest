@@ -207,6 +207,7 @@ class ResourceConfigurator(object):
                 self._add(config, child_resource)
 
     def _validate_views_args_name(self, resource):
+        # XXX seems ugly: need refacto.
         not_last = resource.ids[:-1]
 
         expectation = {
@@ -220,22 +221,21 @@ class ResourceConfigurator(object):
             }
 
         for view_info in resource.views.itervalues():
-            argscount = view_info.view.func_code.co_argcount
-            args_name = view_info.view.func_code.co_varnames[:argscount]
+            spec = inspect.getargspec(view_info.view)
             if inspect.isfunction(view_info.view):
-                expected = tuple(
+                expected = (
                     ['context', 'request']
                     + expectation[view_info.method]
                     )
             else:
-                expected = tuple(['self'] + expectation[view_info.method])
-            if expected != args_name:
+                expected = ['self'] + expectation[view_info.method]
+            if expected != spec.args:
                 raise TypeError(
                     'resource=%s, view=%s, expected %s - got %s' % (
                     resource,
                     view_info.method,
                     expected,
-                    args_name,
+                    spec.args,
                     ))
 
     def _add_routes(self, config, resource):
