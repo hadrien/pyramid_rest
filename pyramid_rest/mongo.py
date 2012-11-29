@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import logging
+
 import os
+import logging
 
 import mongokit
+from bson.objectid import ObjectId
 
 from pyramid.decorator import reify
 from pyramid.events import NewRequest
@@ -104,11 +106,13 @@ class CollectionView(object):
             )
         return getattr(self.request.mongo_db, collection_name)
 
-    def index(self):
-        return {'data': list(self.collection.find())}
+    def index(self, **identifiers):
+        parent_ids = {id_name: ObjectId(identifier)
+                      for id_name, identifier in identifiers.items()}
+        return {'data': list(self.collection.find(parent_ids))}
 
-
-class MultipleCollectionView(object):
-    # XXX: Usage of multiple collection for 1 document:
-    # http://www.mongodb.org/display/DOCS/Using+a+Large+Number+of+Collections
-    pass
+    def show(self, **identifiers):
+        ids = {id_name: ObjectId(identifier)
+               for id_name, identifier in identifiers.items()}
+        ids['_id'] = ids.pop('id')
+        return self.collection.find_one(ids)

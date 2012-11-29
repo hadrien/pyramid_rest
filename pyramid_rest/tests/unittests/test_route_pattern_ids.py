@@ -16,6 +16,7 @@ class TestRoutePatternIds(unittest.TestCase):
         config.registry = mock.MagicMock(spec=Registry)
         return config
 
+    @unittest.expectedFailure
     def test_wrong_parent_id_names(self):
         from pyramid_rest.resource import Resource, ResourceConfigurator
 

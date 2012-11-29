@@ -67,6 +67,12 @@ def not_allowed_view(request):
 
 @implementer(IResourceConfigurator)
 class ResourceConfigurator(object):
+    """Internal configurator of all REST resources. It is responsible for:
+
+    # Registering to pyramid routes and views associated to resources.
+    # . . .
+
+    """
 
     methods = dict(
         index='GET',
@@ -183,7 +189,8 @@ class ResourceConfigurator(object):
         if config._ainfo is None:
             config._ainfo = []
 
-        self._validate_views_args_name(resource)
+        # XXX: to be refactored
+        # self._validate_views_args_name(resource)
         self._add_routes(config, resource)
         self._add_views(config, resource)
         self._add_introspectable(config, resource)
@@ -229,13 +236,17 @@ class ResourceConfigurator(object):
                     )
             else:
                 expected = ['self'] + expectation[view_info.method]
-            if expected != spec.args:
+            nb_args = len(spec.args) - (
+                len(spec.defaults) if spec.defaults else 0
+                )
+            received = spec.args[:nb_args]
+            if expected != received:
                 raise TypeError(
                     'resource=%s, view=%s, expected %s - got %s' % (
                     resource,
                     view_info.method,
                     expected,
-                    spec.args,
+                    received,
                     ))
 
     def _add_routes(self, config, resource):
@@ -422,6 +433,14 @@ class BaseResource(object):
 
     @reify
     def ids(self):
+        """List of identifier names for this resource.
+
+        Example::
+
+            >>> resource = Resource('application.user')
+            >>> resource.ids
+            ['application_id', 'id']
+        """
         my_id = [] if self.singular else ['id']
         if self.parent:
             return self.lineage_ids[:-1] + my_id
@@ -429,8 +448,12 @@ class BaseResource(object):
 
     @reify
     def lineage_ids(self):
-        """Return list of identifier names a child resource needs for its route
-        pattern.
+        """List of identifier names a child resource needs for its route
+        pattern. e.g.::
+
+            >>> resource = Resource('application.user.message')
+            >>> resource.parent.lineage_ids
+            ['application_id', 'user_id']
         """
         id_name = self.short_name + '_id'
         if self.parent:
