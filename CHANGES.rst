@@ -1,6 +1,7 @@
 Development version
 -------------------
 
+* Switch to github.
 * Add support for mongo database:
 
  * Setting in ini file ``pyramid_rest.mongo`` considered true by default

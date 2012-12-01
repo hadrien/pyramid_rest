@@ -84,4 +84,4 @@ What next?
 Code/Feedbacks
 --------------
 
-https://bitbucket.org/hadrien/pyramid_rest
+https://github.com/hadrien/pyramid_rest
