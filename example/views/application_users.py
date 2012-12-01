@@ -1,9 +1,16 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from pyramid_rest.resource import method_config
 
-from example.views import BaseView
+from pyramid_rest.mongo import CollectionView
+
+from example.model import User
 
 
-class ApplicationUsersView(BaseView):
+class ApplicationUsersView(CollectionView):
+
+    model_class = User
 
     def index(self, application_id):
         return [

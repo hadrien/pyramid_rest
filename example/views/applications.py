@@ -1,7 +1,14 @@
-from example.views import BaseView
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+from pyramid_rest.mongo import CollectionView
+
+from example.model import Application
 
 
-class ApplicationsView(BaseView):
+class ApplicationsView(CollectionView):
+
+    model_class = Application
 
     def index(self):
         return {
@@ -14,7 +21,4 @@ class ApplicationsView(BaseView):
             }
 
     def update(self, id):
-        return {}
-
-    def delete(self, id):
         return {}

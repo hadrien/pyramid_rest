@@ -12,10 +12,10 @@ def includeme(config):
     config.add_resource('application')
     config.add_resource('application.medium', plural_name='media')
     config.add_resource('application.user')
+    config.add_resource('application.user.message')
+
     config.add_singular_resource('application.user.score')
     config.add_singular_resource('health')
-
-    config.add_resource('message')
 
     config.scan()
 

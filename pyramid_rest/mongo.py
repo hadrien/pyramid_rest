@@ -4,11 +4,17 @@ from __future__ import absolute_import
 import os
 import logging
 
+from bson.objectid import ObjectId, InvalidId
 import mongokit
-from bson.objectid import ObjectId
 
 from pyramid.decorator import reify
 from pyramid.events import NewRequest
+from pyramid.httpexceptions import (
+    HTTPBadRequest,
+    HTTPCreated,
+    HTTPNotFound,
+    HTTPOk,
+    )
 
 from zope.interface import implementer
 from zope.interface import Interface
@@ -96,23 +102,76 @@ class CollectionView(object):
         if self.model_class is None:
             raise Exception('model_class cannot be None')
 
+    def _get_ids_dict(self, identifiers):
+        """Convert ``str`` identifiers to ``ObjectId``"""
+        try:
+            ids = {id_name: ObjectId(identifier)
+                   for id_name, identifier in identifiers.items()}
+        except InvalidId:
+            raise HTTPBadRequest('Invalid id in: %r' % identifiers)
+        if 'id' in ids:
+            ids['_id'] = ids.pop('id')
+        return ids
+
+    def _get_document_or_404(self, identifiers):
+        document = self.document_cls.find_one(self._get_ids_dict(identifiers))
+        if document is None:
+            raise HTTPNotFound()
+        return document
+
     @reify
     def collection(self):
         # model_class.__collection__ or model_class.__name__ as collection name
-        collection_name = getattr(
-            self.model_class,
-            '__collection__',
-            self.model_class.__name__,
-            )
+        collection_name = getattr(self.model_class, '__collection__')
         return getattr(self.request.mongo_db, collection_name)
 
+    @reify
+    def document_cls(self):
+        return getattr(self.request.mongo_db, self.model_class.__name__)
+
     def index(self, **identifiers):
-        parent_ids = {id_name: ObjectId(identifier)
-                      for id_name, identifier in identifiers.items()}
+        parent_ids = self._get_ids_dict(identifiers)
         return {'data': list(self.collection.find(parent_ids))}
 
+    def create(self, **identifiers):
+        document = self.document_cls(doc=self.request.POST)
+        for k, v in self._get_ids_dict(identifiers).iteritems():
+            document[k] = v
+        try:
+            document.save()
+        except mongokit.StructureError:
+            log.exception(
+                'StructureError creating %s, POST: %s, ids: %s',
+                self.context.resource,
+                self.request.POST,
+                identifiers,
+                )
+            raise HTTPBadRequest()
+
+        ids = [identifiers[name]
+               for name in self.context.resource.ids[:-1]]
+        ids.append(document._id)
+
+        location = self.request.rest_resource_url(
+            self.context.resource.name,
+            *ids
+            )
+        return HTTPCreated(location=location)
+
+    def update(self, **identifiers):
+        # XXX: full replace + etag + last-modified
+        document = self._get_document_or_404(identifiers)
+        for field, value in self.request.POST.iteritems():
+            if field in identifiers or field not in document:
+                continue
+            document[field] = value
+        document.save()
+        return HTTPOk()
+
     def show(self, **identifiers):
-        ids = {id_name: ObjectId(identifier)
-               for id_name, identifier in identifiers.items()}
-        ids['_id'] = ids.pop('id')
-        return self.collection.find_one(ids)
+        return self._get_document_or_404(identifiers)
+
+    def delete(self, **identifiers):
+        # XXX: cascade delete sub resources?
+        self._get_document_or_404(identifiers).delete()
+        return HTTPOk()

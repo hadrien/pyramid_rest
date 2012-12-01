@@ -72,13 +72,8 @@ Pyramid REST
 What next?
 ----------
 
-#. Url generation:
-
-   * request.rest_resource_url as resource_url is taken
-   * request.rest_resource_path as resource_path is taken
-
+#. HTTP PATCH method: http://tools.ietf.org/html/rfc5789
 #. Resource Scaffolding command;
-#. Custom renderer which adapts response format depending on Accept header;
 #. Links;
 #. Validation;
 #. Pagination;
