@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+import os
 import sys
 import unittest
 
@@ -18,10 +18,10 @@ class TestExampleController(unittest.TestCase):
 
     @property
     def mongo_db(self):
-        from pyramid_rest.mongo import IMongoConnection, DATABASE_NAME
+        from pyramid_rest.mongo import IMongoConnection
         return getattr(
             self.app.app.registry.getUtility(IMongoConnection),
-            DATABASE_NAME
+            os.environ['MONGO_DB_NAME']
             )
 
     def tearDown(self):

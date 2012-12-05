@@ -1,9 +1,0 @@
-\.coverage
-\.noseids
-\.env
-coverage.xml
-nosetests.xml
-pyramid_rest\.egg-info
-.*\.pyc
-\.DS_Store
-docs/build

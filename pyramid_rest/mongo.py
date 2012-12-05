@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-
 import os
 import logging
+from urlparse import urlparse
 
 from bson.objectid import ObjectId, InvalidId
 import mongokit
@@ -23,13 +22,12 @@ from pyramid_rest.resource import ResourceAdded
 
 log = logging.getLogger(__name__)
 
-DATABASE_NAME = os.environ['MONGO_DB_NAME']
-
 __all__ = ['register_document', 'CollectionView', ]
 
 
 def includeme(config):
     log.info('Configure mongo...')
+    os.environ['MONGO_URL_NAME'] = urlparse(os.environ['MONGO_URI']).path[1:]
     connection = MongoConnection(
         os.environ['MONGO_URI'],
         auto_start_request=False,
@@ -79,7 +77,7 @@ def mongo_connection(request):
 
 
 def mongo_db(request):
-    return getattr(request.mongo_connection, DATABASE_NAME)
+    return getattr(request.mongo_connection, os.environ['MONGO_DB_NAME'])
 
 
 def begin_request(event):
@@ -172,6 +170,6 @@ class CollectionView(object):
         return self._get_document_or_404(identifiers)
 
     def delete(self, **identifiers):
-        # XXX: cascade delete sub resources?
+        """No delete cascade on sub resources."""
         self._get_document_or_404(identifiers).delete()
         return HTTPOk()

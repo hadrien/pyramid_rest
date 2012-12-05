@@ -72,6 +72,7 @@ Pyramid REST
 What next?
 ----------
 
+#. Security
 #. HTTP PATCH method: http://tools.ietf.org/html/rfc5789
 #. Resource Scaffolding command;
 #. Links;

@@ -120,7 +120,8 @@ class ResourceConfigurator(object):
         try:
             cls = config.maybe_dotted(dotted_class)
         except ImportError:
-            raise ImportError('No class %s found.' % dotted_class)
+            log.error('No class %s found.', dotted_class)
+            raise
         config.scan(dotted_module)
 
         res(cls)  # decorate class to register config

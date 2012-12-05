@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 
 from mongokit import Document
 
@@ -12,7 +11,7 @@ class Application(Document):
 
     structure = {
         'name': unicode,
-        'secret_key': basestring,
+        'secret_key': unicode,
         }
 
     required_fields = ['name', 'secret_key']

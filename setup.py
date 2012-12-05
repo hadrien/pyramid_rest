@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
 import setuptools
 
 if not getattr(setuptools, "_distribute", False):
@@ -20,7 +19,7 @@ tests_require = [
     'yanc',
     ]
 
-extras_require = {'mongo': ['mongokit', ]}
+extras_require = {'mongo': ['mongokit', 'pymongo==2.3']}
 
 setuptools.setup(
     setup_requires=setup_requires,
