@@ -27,7 +27,7 @@ __all__ = ['register_document', 'CollectionView', ]
 
 def includeme(config):
     log.info('Configure mongo...')
-    os.environ['MONGO_URL_NAME'] = urlparse(os.environ['MONGO_URI']).path[1:]
+    os.environ['MONGO_DB_NAME'] = urlparse(os.environ['MONGO_URI']).path[1:]
     connection = MongoConnection(
         os.environ['MONGO_URI'],
         auto_start_request=False,
