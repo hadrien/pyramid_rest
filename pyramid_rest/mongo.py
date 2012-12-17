@@ -81,7 +81,6 @@ def mongo_db(request):
 
 
 def begin_request(event):
-    """"""
     event.request.mongo_connection.start_request()
     event.request.add_finished_callback(end_request)
 
@@ -132,7 +131,8 @@ class CollectionView(object):
         return {'data': list(self.collection.find(parent_ids))}
 
     def create(self, **identifiers):
-        document = self.document_cls(doc=self.request.POST)
+        document = self.document_cls()
+        document.update(self.request.POST)
         for k, v in self._get_ids_dict(identifiers).iteritems():
             document[k] = v
         try:
