@@ -137,9 +137,9 @@ class CollectionView(object):
             document[k] = v
         try:
             document.save()
-        except mongokit.StructureError:
+        except (mongokit.StructureError, mongokit.RequireFieldError):
             log.exception(
-                'StructureError creating %s, POST: %s, ids: %s',
+                'error while creating %s, POST: %s, ids: %s',
                 self.context.resource,
                 self.request.POST,
                 identifiers,
