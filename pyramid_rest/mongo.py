@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
 import logging
-from urlparse import urlparse
 
 from bson.objectid import ObjectId, InvalidId
 import mongokit
 
 from pyramid.decorator import reify
-from pyramid.events import NewRequest
 from pyramid.httpexceptions import (
     HTTPBadRequest,
     HTTPCreated,
@@ -15,10 +12,11 @@ from pyramid.httpexceptions import (
     HTTPOk,
     )
 
-from zope.interface import implementer
-from zope.interface import Interface
+from pyramid_mongokit import register_document, IMongoConnection
+
 
 from pyramid_rest.resource import ResourceAdded
+
 
 log = logging.getLogger(__name__)
 
@@ -26,23 +24,8 @@ __all__ = ['register_document', 'CollectionView', ]
 
 
 def includeme(config):
-    log.info('Configure mongo...')
-    os.environ['MONGO_DB_NAME'] = urlparse(os.environ['MONGO_URI']).path[1:]
-    connection = MongoConnection(
-        os.environ['MONGO_URI'],
-        auto_start_request=False,
-        tz_aware=True,
-        )
-    config.registry.registerUtility(connection)
-    config.add_request_method(
-        mongo_connection,
-        'mongo_connection',
-        reify=True,
-        )
-    config.add_request_method(mongo_db, 'mongo_db', reify=True)
-    config.add_subscriber(begin_request, NewRequest)
+    config.include('pyramid_mongokit')
     config.add_subscriber(resource_added, ResourceAdded)
-    log.info('Mongo configured...')
 
 
 def resource_added(event):
@@ -57,37 +40,6 @@ def resource_added(event):
     mongo_conn = event.config.registry.getUtility(IMongoConnection)
     mongo_conn.register(collection)
     log.info('Registered collection %s on mongokit connection.', collection)
-
-
-def register_document(registry, document_cls):
-    registry.getUtility(IMongoConnection).register(document_cls)
-
-
-class IMongoConnection(Interface):
-    pass
-
-
-@implementer(IMongoConnection)
-class MongoConnection(mongokit.Connection):
-    pass
-
-
-def mongo_connection(request):
-    return request.registry.getUtility(IMongoConnection)
-
-
-def mongo_db(request):
-    return getattr(request.mongo_connection, os.environ['MONGO_DB_NAME'])
-
-
-def begin_request(event):
-    """"""
-    event.request.mongo_connection.start_request()
-    event.request.add_finished_callback(end_request)
-
-
-def end_request(request):
-    request.mongo_connection.end_request()
 
 
 class CollectionView(object):

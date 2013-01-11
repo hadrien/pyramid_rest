@@ -19,7 +19,7 @@ tests_require = [
     'yanc',
     ]
 
-extras_require = {'mongo': ['mongokit', 'pymongo==2.3']}
+extras_require = {'mongo': ['pyramid_mongokit']}
 
 setuptools.setup(
     setup_requires=setup_requires,
