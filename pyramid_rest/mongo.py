@@ -102,13 +102,20 @@ class CollectionView(object):
 
     def _get_ids_dict(self, identifiers):
         """Convert ``str`` identifiers to ``ObjectId``"""
-        try:
-            ids = {id_name: ObjectId(identifier)
-                   for id_name, identifier in identifiers.items()}
-        except InvalidId:
-            raise HTTPBadRequest('Invalid id in: %r' % identifiers)
+        ids = identifiers.copy()
         if 'id' in ids:
             ids['_id'] = ids.pop('id')
+        try:
+            for key, value in ids.iteritems():
+                try:
+                    cls = self.model_class.structure[key]
+                except KeyError:
+                    cls = ObjectId
+                ids[key] = cls(value)
+        except (InvalidId, ValueError):
+            log.debug('Invalid id in %r', identifiers, exc_info=True)
+            raise HTTPBadRequest('Invalid id in: %r' % identifiers)
+
         return ids
 
     def _get_document_or_404(self, identifiers):
