@@ -1,6 +1,15 @@
 Development version
 -------------------
 
+0.2.5
+-----
+
+* Moved mongo connection to pyramid_mongokit.
+
+
+0.2.4
+-----
+
 * Switch to github.
 * Add support for mongo database:
 
