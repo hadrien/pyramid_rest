@@ -91,14 +91,15 @@ class CollectionView(object):
         return {'data': list(self.collection.find(parent_ids))}
 
     def create(self, **identifiers):
-        document = self.document_cls(doc=self.request.POST)
+        document = self.document_cls()
+        document.update(self.request.POST)
         for k, v in self._get_ids_dict(identifiers).iteritems():
             document[k] = v
         try:
             document.save()
-        except mongokit.StructureError:
+        except (mongokit.StructureError, mongokit.RequireFieldError):
             log.exception(
-                'StructureError creating %s, POST: %s, ids: %s',
+                'error while creating %s, POST: %s, ids: %s',
                 self.context.resource,
                 self.request.POST,
                 identifiers,

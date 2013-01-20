@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 
 from bson.objectid import ObjectId
 
@@ -16,6 +17,11 @@ class Message(Document):
         'content': unicode,
         'application_id': ObjectId,
         'user_id': ObjectId,
+        'created': datetime.datetime,
+        }
+
+    default_values = {
+        'created': datetime.datetime.utcnow,
         }
 
     required_fields = ['from', 'content', 'application_id', 'user_id']

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from bson.objectid import ObjectId
+import datetime
 
+from bson.objectid import ObjectId
 from pyramid.httpexceptions import HTTPBadRequest
 
 from pyramid_rest.tests.functional import TestExampleController
@@ -73,6 +74,7 @@ class TestCollectionView(TestExampleController):
             'user_id': ObjectId(self.user_id),
             'from': u'Peter Tosh',
             'content': u'yo man',
+            'created': datetime.datetime.utcnow(),
             })
         message.save()
 
@@ -84,7 +86,6 @@ class TestCollectionView(TestExampleController):
             )
 
         result = self.mongo_db.Message.find_one({'_id': message._id})
-
         self.assertEqual(u'yo man 2', result.content)
 
     def test_delete(self):
