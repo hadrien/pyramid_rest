@@ -129,7 +129,7 @@ class ResourceConfigurator(object):
         self._add(config, res)
 
     def add_method_config(self, cls, method, settings):
-        if 'cls' not in self.methods_configs:
+        if cls not in self.methods_configs:
             self.methods_configs[cls] = dict()
         self.methods_configs[cls][method] = settings
 
