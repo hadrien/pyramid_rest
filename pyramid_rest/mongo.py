@@ -108,7 +108,7 @@ class CollectionView(object):
 
         ids = [identifiers[name]
                for name in self.context.resource.ids[:-1]]
-        ids.append(document._id)
+        ids.append(document['_id'])
 
         location = self.request.rest_resource_url(
             self.context.resource.name,
