@@ -37,7 +37,10 @@ def resource_added(event):
     if collection is None:
         return
 
-    mongo_conn = event.config.registry.getUtility(IMongoConnection)
+    mongo_conn = event.config.registry.getUtility(
+        IMongoConnection,
+        'mongo_connection',
+         )
     mongo_conn.register(collection)
     log.info('Registered collection %s on mongokit connection.', collection)
 
