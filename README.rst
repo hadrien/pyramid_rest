@@ -1,5 +1,8 @@
 Pyramid REST
-------------
+============
+
+Overview
+--------
 
 * First draft of a pyramid extension to build RESTful web application.
 * Features included:
@@ -72,7 +75,6 @@ Pyramid REST
 What next?
 ----------
 
-#. Security
 #. HTTP PATCH method: http://tools.ietf.org/html/rfc5789
 #. Resource Scaffolding command;
 #. Links;

@@ -1,5 +1,17 @@
-Development version
--------------------
+Changelog
+=========
+
+Development
+-----------
+
+
+0.2.8
+-----
+
+* Compatibility with updated zope.interfaces
+* Using last functionality of pyramid_mongokit
+* No more distribute in setup.py
+
 
 0.2.5
 -----
@@ -19,8 +31,8 @@ Development version
  * Mongo connection gets uri from ``os.environ['MONGO_URI']``
  * Database name comes from ``os.environ['MONGO_DB_NAME']``
  * Any resource view with a ``model_class`` class attribute with value being
-   a definition of a ``mongokit.Document`` can inherit
-   ``pyramid_rest.mongo.DocumentView`` to inherit all default actions.
+   a definition of a ``mongokit.Document`` can inherit ``pyramid_rest.mongo.DocumentView``
+   to inherit all default actions.
 
 * Add custom renderer which adapts output format depending on accept headers,
   format supported are ``application/json`` & ``application/bson``
