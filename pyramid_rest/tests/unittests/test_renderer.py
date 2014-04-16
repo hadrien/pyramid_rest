@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 from decimal import Decimal
 from bson.objectid import ObjectId
@@ -29,9 +30,3 @@ class TestBson(unittest.TestCase):
         result = bson_loads(bson_dumps(o))
 
         self.assertEqual(o, result)
-
-
-class TestRestFactory(unittest.TestCase):
-
-    def test_call(self):
-        from pyramid_rest.renderer import Factory

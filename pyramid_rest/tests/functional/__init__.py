@@ -19,7 +19,10 @@ class TestExampleController(unittest.TestCase):
     def mongo_db(self):
         from pyramid_mongokit import IMongoConnection
         return getattr(
-            self.app.app.registry.getUtility(IMongoConnection),
+            self.app.app.registry.getUtility(
+                IMongoConnection,
+                'mongo_connection',
+                ),
             os.environ['MONGO_DB_NAME']
             )
 
