@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from pyramid_rest.resource import method_config
 

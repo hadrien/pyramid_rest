@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 from bson.objectid import ObjectId
 
@@ -18,4 +17,6 @@ class User(Document):
 
     required_fields = ['application_id', 'name']
 
-    indexes = [{'fields': ['application_id']}]
+    indexes = [{'fields': ['application_id']},
+               {'fields': ['name'], 'unique': True},
+               ]

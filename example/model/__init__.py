@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 
 from example.model.application import Application

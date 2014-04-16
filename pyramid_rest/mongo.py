@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from bson.objectid import ObjectId, InvalidId
@@ -12,15 +11,12 @@ from pyramid.httpexceptions import (
     HTTPOk,
     )
 
-from pyramid_mongokit import register_document, IMongoConnection
-
-
 from pyramid_rest.resource import ResourceAdded
 
 
 log = logging.getLogger(__name__)
 
-__all__ = ['register_document', 'CollectionView', ]
+__all__ = ['CollectionView', ]
 
 
 def includeme(config):
@@ -30,6 +26,7 @@ def includeme(config):
 
 def resource_added(event):
     resource = event.resource
+    config = event.config
     cls = getattr(resource, 'view_class', None)
     if cls is None or (not issubclass(cls, CollectionView)):
         return
@@ -37,9 +34,7 @@ def resource_added(event):
     if collection is None:
         return
 
-    mongo_conn = event.config.registry.getUtility(IMongoConnection)
-    mongo_conn.register(collection)
-    log.info('Registered collection %s on mongokit connection.', collection)
+    config.register_document(collection)
 
 
 class CollectionView(object):

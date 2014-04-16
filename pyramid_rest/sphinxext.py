@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from sphinx.util.compat import Directive
 
 from pyramid.config import Configurator

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import functools
 import inspect
 import logging
@@ -115,15 +114,23 @@ class ResourceConfigurator(object):
 
         class_name = ''.join(a.title() for a in res.collection_name.split("."))
         module_name = res.collection_name.replace('.', '_')
-        dotted_module = '%s.views.%s' % (config.package_name, module_name)
-        dotted_class = '%s:%sView' % (dotted_module, class_name)
-        try:
-            cls = config.maybe_dotted(dotted_class)
-        except ImportError:
-            log.error('No class %s found.', dotted_class)
-            raise
-        config.scan(dotted_module)
 
+        which_one = (
+            '%s.views.%s' % (config.package_name, module_name),
+            '%s.%s' % (config.package_name, module_name),
+            )
+
+        for dotted_module in which_one:
+            dotted_class = '%s:%sView' % (dotted_module, class_name)
+            try:
+                cls = config.maybe_dotted(dotted_class)
+                break
+            except ImportError:
+                log.debug('No class found %r', dotted_class)
+        if dotted_module is None:
+            raise Exception('No match for resource %s' % resource_name)
+
+        config.scan(dotted_module)
         res(cls)  # decorate class to register config
         res.update_views_settings(self.methods_configs.get(cls, {}))
         self._add(config, res)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Pyramid REST documentation build configuration file, created by
 # sphinx-quickstart on Sat Sep 22 14:08:50 2012.

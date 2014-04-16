@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import unittest
@@ -18,7 +17,7 @@ class TestExampleController(unittest.TestCase):
 
     @property
     def mongo_db(self):
-        from pyramid_rest.mongo import IMongoConnection
+        from pyramid_mongokit import IMongoConnection
         return getattr(
             self.app.app.registry.getUtility(IMongoConnection),
             os.environ['MONGO_DB_NAME']

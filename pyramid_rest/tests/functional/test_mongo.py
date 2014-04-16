@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 
 from bson.objectid import ObjectId
@@ -90,3 +89,10 @@ class TestCollectionView(TestExampleController):
 
     def test_delete(self):
         pass
+
+    def test_create_conflict(self):
+        result = self.app.post(
+            '/applications/%s/users' % self.app_id,
+            {u'name': u'Bob Marley', }
+            )
+        print result

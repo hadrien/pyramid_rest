@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from pyramid_rest.tests.functional import TestExampleController
 
 
