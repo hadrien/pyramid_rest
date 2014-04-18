@@ -6,4 +6,5 @@ webtest
 waitress
 yanc
 pyramid_mongokit
+coveralls
 -e .

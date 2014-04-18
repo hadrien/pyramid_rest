@@ -1,6 +1,15 @@
 Pyramid REST
 ============
 
+.. image:: https://travis-ci.org/hadrien/pyramid_rest.png?branch=master
+   :target: https://travis-ci.org/hadrien/pyramid_rest
+
+.. image:: https://coveralls.io/repos/hadrien/pyramid_rest/badge.png
+   :target: https://coveralls.io/r/hadrien/pyramid_rest
+
+.. image:: https://pypip.in/d/pyramid_rest/badge.png
+   :target: https://crate.io/packages/pyramid_rest/
+
 Overview
 --------
 
