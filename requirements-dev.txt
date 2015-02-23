@@ -4,7 +4,6 @@ nose
 nosexcover
 webtest
 waitress
-yanc
+yanc==0.2.4
 pyramid_mongokit
 coveralls
--e .
